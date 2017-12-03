@@ -73,16 +73,16 @@ class RowlessModel(object):
     def loss(self):
         ## returns instead of making a self.loss variable
         if self.type1:
-            return loss_util(self.out_input_1, self.out_input_2_type_13, self.out_input_3_type_12)
+            return self.loss_util(self.out_input_1, self.out_input_2_type_13, self.out_input_3_type_12)
         elif self.type2:
-            return loss_util(self.out_input_1, self.out_input_2_type_2, self.out_input_3_type_12)
+            return self.loss_util(self.out_input_1, self.out_input_2_type_2, self.out_input_3_type_12)
         else:
-            return loss_util(self.out_input_1, self.out_input_2_type_13, self.out_input_3_type_3)
+            return self.loss_util(self.out_input_1, self.out_input_2_type_13, self.out_input_3_type_3)
     
     def loss_util(self,emb_1,emb_2,emb_3):
         return tf.log(tf.sigmoid(tf.matmul(emb_1,emb_2) - tf.matmul(emb_1,emb_3)))
     
-    def relation_share():
+    def relation_share(self):
         return tf.Variable(tf.truncated_normal((self.wordvec_dim),mean=0,stddev=1.5),dtype=tf.float32)
 
     def train(self):
