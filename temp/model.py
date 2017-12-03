@@ -1,9 +1,7 @@
 import tensorflow as tf
 
-
 # TODO: Make model more generic. Need to abstractions
 class RowlessModel(object):
-    # Create input placeholder for the network
     def __init__(self, wordvecdim, num_units, seq1, seq2=None, seq3=None, kb_relation_use=False,
                  vocab_size=None, embedding_size=None, rel_ids=None, mode="train"):
         if mode == "train":
@@ -28,8 +26,7 @@ class RowlessModel(object):
         self.seq_len2 = seq2
         self.seq_len3 = seq3
         self.create_placeholders()
-        self.create_lstm_outputs()
-        self.loss()
+        self.create_outputs()
         self.sess = tf.Session()
         self.init = tf.global_variables_initializer()
         self.sess.run(self.init)
@@ -43,22 +40,25 @@ class RowlessModel(object):
                                                   [self.vocab_size, self.embedding_size], dtype=tf.float32)
             self.emb_rel_ids = tf.nn.embedding_lookup(self.rel_embeddings, self.rel_ids)
 
-    # generate the outputs for each input
-    def create_lstm_outputs(self):
+    def create_outputs(self):
+        # o/p operators for each kind of input operator
         with tf.variable_scope('shared_lstm') as scope:
             self.out_input_1 = self.lstm_share(self.num_units, self.input_1, self.seq_len1)
             scope.reuse_variables()  # the variables will be reused.
-            self.out_input_2 = self.lstm_share(self.num_units, self.input_2, self.seq_len2)
+            self.out_input_2_type_13 = self.lstm_share(self.num_units, self.input_2, self.seq_len2, True)
             scope.reuse_variables()
-            self.out_input_3 = self.lstm_share(self.num_units, self.input_3, self.seq_len3)
+            self.out_input_3_type_12 = self.lstm_share(self.num_units, self.input_3, self.seq_len3, True)
+            self.out_input_2_type_2 = self.relation_share()
+            self.out_input_3_type_3 = self.relation_share()
 
-    # Placeholders for input data
     def create_placeholders(self):
+        #placeholders for all kinds of input
         self.input_1 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s1")
-        self.input_2 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s2")
-        self.input_3 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s3")
+        self.input_2_type_13 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name = "s2t13")
+        self.input_2_type_2 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name = "s2t2")
+        self.input_3_type_12 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name = "s3t12")
+        self.input_3_type_3 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name = "s2t3")
 
-    # create a shared rnn layer
     def lstm_share(self, num_units, input, seq_len):
         lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(num_units=num_units, state_is_tuple=True)
         outputs, _ = tf.nn.dynamic_rnn(cell=lstm_cell,
@@ -70,38 +70,38 @@ class RowlessModel(object):
 
         return outputs[-1]
 
-    # Loss function
     def loss(self):
-        self.loss_sentence = tf.log(
-            tf.sigmoid(tf.matmul(self.out_input_1, self.out_input_2) - tf.matmul(self.out_input_1, self.out_input_3)))
+        ## returns instead of making a self.loss variable
+        if self.type1:
+            return loss_util(self.out_input_1, self.out_input_2_type_13, self.out_input_3_type_12)
+        elif self.type2:
+            return loss_util(self.out_input_1, self.out_input_2_type_2, self.out_input_3_type_12)
+        else:
+            return loss_util(self.out_input_1, self.out_input_2_type_13, self.out_input_3_type_3)
+    
+    def loss_util(self,emb_1,emb_2,emb_3):
+        return tf.log(tf.sigmoid(tf.matmul(emb_1,emb_2) - tf.matmul(emb_1,emb_3)))
+    
+    def relation_share():
+        return tf.Variable(tf.truncated_normal((self.wordvec_dim),mean=0,stddev=1.5),dtype=tf.float32)
 
     def train(self):
         pass
 
-        # ## Preprocessing functions ##
-        # def preprocess_file(f):
-        #     """Returns np.array [9 x n_sents]. Columns : [e1,e1_str,e1_start_idx,e1_end_idx,e2,e2_str,e2_start_idx,e2_end_idx,sent]"""
-        #     with open(f,'rb') as f:
-        #         test_lines = [(str(codecs.unicode_escape_decode(str(i)[2:-3])[0])[1:].split('\t')) for i in f.readlines()]
-        #     test_lines = np.array([i for i in test_lines if len(i)==13])
-        #     ip = test_lines.T
-        #     ip[12] = np.array([re.sub('[^\w\s]','',i.lower()) for i in ip[12]])
-        #     return ip[[0,2,3,4,5,7,8,9,12]]
-
-        # # verify whether the variables are reused
-        # for v in tf.global_variables():
-        #    print(v.name)
-        #
-        # # concat the three outputs
-        # output = tf.concat...
-        #
-        # # Pass it to the final_lstm layer and out the logits
-        # logits = final_layer(output, ...)
-        #
-        # train_op = ...
-        #
-        # # train
-        # sess.run(train_op, feed_dict{input_1: in1, input_2: in2, input_3:in3, labels: ...}
+# # verify whether the variables are reused
+# for v in tf.global_variables():
+#    print(v.name)
+#
+# # concat the three outputs
+# output = tf.concat...
+#
+# # Pass it to the final_lstm layer and out the logits
+# logits = final_layer(output, ...)
+#
+# train_op = ...
+#
+# # train
+# sess.run(train_op, feed_dict{input_1: in1, input_2: in2, input_3:in3, labels: ...}
 
 
 r = RowlessModel(12, 20, [2, 3, 4], [4, 6, 7], [1, 2, 3])
