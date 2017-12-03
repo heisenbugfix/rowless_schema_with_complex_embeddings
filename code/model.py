@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+
 # TODO: Make model more generic. Need to abstractions
 class RowlessModel(object):
     # Create input placeholder for the network
@@ -20,7 +21,7 @@ class RowlessModel(object):
             else:
                 self.embedding_size = embedding_size
 
-        self.create_kb_embeddings()
+        self.create_kb_embeddings(kb_relation_use)
         self.wordvec_dim = wordvecdim
         self.num_units = num_units
         self.seq_len1 = seq1
@@ -36,12 +37,14 @@ class RowlessModel(object):
             print(v.name)
 
     # Create KB embeddings
-    def create_kb_embeddings(self):
-        self.rel_embeddings = tf.get_variable("relation_embeddings",
-                                              [self.vocab_size, self.embedding_size], dtype=tf.float32)
-        self.emb_rel_ids = tf.nn.embedding_lookup(self.rel_embeddings, self.rel_ids)
+    def create_kb_embeddings(self, kb_relation_use=False):
+        if kb_relation_use:
+            self.rel_embeddings = tf.get_variable("relation_embeddings",
+                                                  [self.vocab_size, self.embedding_size], dtype=tf.float32)
+            self.emb_rel_ids = tf.nn.embedding_lookup(self.rel_embeddings, self.rel_ids)
 
-        # generate the outputs for each input
+            # generate the outputs for each input
+
     def create_lstm_outputs(self):
         with tf.variable_scope('shared_lstm') as scope:
             self.out_input_1 = self.lstm_share(self.num_units, self.input_1, self.seq_len1)
@@ -76,15 +79,15 @@ class RowlessModel(object):
     def train(self):
         pass
 
-# ## Preprocessing functions ##
-# def preprocess_file(f):
-#     """Returns np.array [9 x n_sents]. Columns : [e1,e1_str,e1_start_idx,e1_end_idx,e2,e2_str,e2_start_idx,e2_end_idx,sent]"""
-#     with open(f,'rb') as f:
-#         test_lines = [(str(codecs.unicode_escape_decode(str(i)[2:-3])[0])[1:].split('\t')) for i in f.readlines()]
-#     test_lines = np.array([i for i in test_lines if len(i)==13])
-#     ip = test_lines.T
-#     ip[12] = np.array([re.sub('[^\w\s]','',i.lower()) for i in ip[12]])
-#     return ip[[0,2,3,4,5,7,8,9,12]]
+    # ## Preprocessing functions ##
+    # def preprocess_file(f):
+    #     """Returns np.array [9 x n_sents]. Columns : [e1,e1_str,e1_start_idx,e1_end_idx,e2,e2_str,e2_start_idx,e2_end_idx,sent]"""
+    #     with open(f,'rb') as f:
+    #         test_lines = [(str(codecs.unicode_escape_decode(str(i)[2:-3])[0])[1:].split('\t')) for i in f.readlines()]
+    #     test_lines = np.array([i for i in test_lines if len(i)==13])
+    #     ip = test_lines.T
+    #     ip[12] = np.array([re.sub('[^\w\s]','',i.lower()) for i in ip[12]])
+    #     return ip[[0,2,3,4,5,7,8,9,12]]
 
     # # verify whether the variables are reused
     # for v in tf.global_variables():
@@ -102,8 +105,6 @@ class RowlessModel(object):
     # sess.run(train_op, feed_dict{input_1: in1, input_2: in2, input_3:in3, labels: ...}
 
 
-
-r = RowlessModel(12,20,[2,3,4],[4,6,7],[1,2,3])
-print (tf.__version__)
-print ("OK")
-
+r = RowlessModel(12, 20, [2, 3, 4], [4, 6, 7], [1, 2, 3])
+print(tf.__version__)
+print("OK")
