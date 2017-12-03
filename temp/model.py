@@ -45,19 +45,19 @@ class RowlessModel(object):
         with tf.variable_scope('shared_lstm') as scope:
             self.out_input_1 = self.lstm_share(self.num_units, self.input_1, self.seq_len1)
             scope.reuse_variables()  # the variables will be reused.
-            self.out_input_2_type_13 = self.lstm_share(self.num_units, self.input_2_type_13, self.seq_len2)
+            self.out_input_2 = self.lstm_share(self.num_units, self.input_2, self.seq_len2)
             scope.reuse_variables()
-            self.out_input_3_type_12 = self.lstm_share(self.num_units, self.input_3_type_12, self.seq_len3)
-            self.out_input_2_type_2 = self.relation_share()
-            self.out_input_3_type_3 = self.relation_share()
+            self.out_input_3 = self.lstm_share(self.num_units, self.input_3, self.seq_len3)
+            self.out_input_2_relation = self.relation_share()
+            self.out_input_3_relation = self.relation_share()
 
     def create_placeholders(self):
         #placeholders for all kinds of input
         self.input_1 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s1")
-        self.input_2_type_13 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name = "s2t13")
-        self.input_2_type_2 = tf.placeholder(tf.float32, [None, self.wordvec_dim], name = "s2t2")
-        self.input_3_type_12 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name = "s3t12")
-        self.input_3_type_3 = tf.placeholder(tf.float32, [None, self.wordvec_dim], name = "s2t3")
+        self.input_2 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name ="s2")
+        self.input_2_relation = tf.placeholder(tf.float32, [None, self.wordvec_dim], name ="r2")
+        self.input_3 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name ="s3")
+        self.input_3_relation = tf.placeholder(tf.float32, [None, self.wordvec_dim], name ="r3")
 
     def lstm_share(self, num_units, input, seq_len):
         lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(num_units=num_units, state_is_tuple=True)
@@ -73,11 +73,11 @@ class RowlessModel(object):
     def loss(self):
         ## returns instead of making a self.loss variable
         if self.type1:
-            return self.loss_util(self.out_input_1, self.out_input_2_type_13, self.out_input_3_type_12)
+            return self.loss_util(self.out_input_1, self.out_input_2, self.out_input_3)
         elif self.type2:
-            return self.loss_util(self.out_input_1, self.out_input_2_type_2, self.out_input_3_type_12)
+            return self.loss_util(self.out_input_1, self.out_input_2_relation, self.out_input_3)
         else:
-            return self.loss_util(self.out_input_1, self.out_input_2_type_13, self.out_input_3_type_3)
+            return self.loss_util(self.out_input_1, self.out_input_2, self.out_input_3_relation)
     
     def loss_util(self,emb_1,emb_2,emb_3):
         return tf.log(tf.sigmoid(tf.matmul(emb_1,emb_2) - tf.matmul(emb_1,emb_3)))
