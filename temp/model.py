@@ -45,9 +45,9 @@ class RowlessModel(object):
         with tf.variable_scope('shared_lstm') as scope:
             self.out_input_1 = self.lstm_share(self.num_units, self.input_1, self.seq_len1)
             scope.reuse_variables()  # the variables will be reused.
-            self.out_input_2_type_13 = self.lstm_share(self.num_units, self.input_2, self.seq_len2, True)
+            self.out_input_2_type_13 = self.lstm_share(self.num_units, self.input_2, self.seq_len2)
             scope.reuse_variables()
-            self.out_input_3_type_12 = self.lstm_share(self.num_units, self.input_3, self.seq_len3, True)
+            self.out_input_3_type_12 = self.lstm_share(self.num_units, self.input_3, self.seq_len3)
             self.out_input_2_type_2 = self.relation_share()
             self.out_input_3_type_3 = self.relation_share()
 
