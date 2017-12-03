@@ -67,61 +67,6 @@ class RowlessModel(object):
     # sess.run(train_op, feed_dict{input_1: in1, input_2: in2, input_3:in3, labels: ...}
 
 
-# class Test(object):
-#
-#     def shared_lstm(self, num_units):
-#
-#
-#     def model_fn(self, features, labels, mode, params=None):
-#         with tf.variable_scope("shared_lstm")as lstm_scope:
-#             lstm_s1 = tf.nn.rnn_cell.BasicLSTMCell()
-#
-#     def createEstimator(self):
-#         nn = tf.estimator.Estimator(model_fn=self.model_fn)
-#
-#
-# class RowLess(object):
-#
-#     def __init__(self, batch_size, num_sentences, max_input_len, wordvec_dim, hidden_dim):
-#         self.max_input_len = max_input_len
-#         self.wordvec_dim = wordvec_dim
-#         self.num_sentences = num_sentences
-#         self.hidden_dim = hidden_dim
-#         self.batch_size = batch_size
-#         # Placeholders
-#         #Word embedding input
-#         self.input_x = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name = "input_x")
-#         self.seq_len = tf.placeholder(tf.float32, [None, ], name='seq_len')
-#
-#         #TODO: Add Embedding layer which will be trained only at specific times
-#
-#         # LSTM Layer
-#         with tf.variable_scope("LSTM"):
-#             lstm_cell = tf.nn.rnn_cell.LSTMCell(num_units=self.hidden_dim)
-#             lstm_cell2 = tf.nn.rnn_cell.LSTMCell(num_units=self.hidden_dim, reuse=True)
-#             lstm_cell3 = tf.nn.rnn_cell.LSTMCell(num_units=self.hidden_dim, reuse=True)
-#
-#
-#             outputs, _ = tf.nn.dynamic_rnn(cell=lstm_cell3,
-#                                             inputs=self.input_x,
-#                                             sequence_length=self.seq_len,
-#                                             dtype=tf.float32
-#                                        )
-#         #Questions how to reuse
-#         #Which type of get variable to use
-#         #How to use seq len..will it be a list or a placeholder as shown
-#
-#         #Cost will be log(sigmoid(E1.E2- E2.E3)))
-#         self.sess = tf.Session()
-#         self.init = tf.global_variables_initializer()
-#         self.sess.run(self.init)
-#
-#         #Evaluate
-#
-#         '''
-#         # Evaluate held out KB data.
-#         '''
-
 
 r = RowlessModel(12,20,[2,3,4],[4,6,7],[1,2,3])
 print ("OK")
