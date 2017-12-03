@@ -25,9 +25,9 @@ class RowlessModel(object):
         with tf.variable_scope('shared_lstm') as scope:
             self.out_input_1 = self.lstm_share(self.num_units, self.input_1, self.seq_len1)
             scope.reuse_variables()  # the variables will be reused.
-            self.out_input_2 = self.lstm_share(self.num_units, self.input_2, self.seq_len2, True)
+            self.out_input_2 = self.lstm_share(self.num_units, self.input_2, self.seq_len2)
             scope.reuse_variables()
-            self.out_input_3 = self.lstm_share(self.num_units, self.input_3, self.seq_len3, True)
+            self.out_input_3 = self.lstm_share(self.num_units, self.input_3, self.seq_len3)
 
     def create_placeholders(self):
         self.input_1 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s1")
@@ -35,8 +35,8 @@ class RowlessModel(object):
         self.input_3 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name = "s3")
 
     # create a shared rnn layer
-    def lstm_share(self, num_units, input, seq_len, reuse=False):
-       lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(num_units=num_units, state_is_tuple=True, reuse=reuse)
+    def lstm_share(self, num_units, input, seq_len):
+       lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(num_units=num_units, state_is_tuple=True)
        outputs, _ = tf.nn.dynamic_rnn(cell=lstm_cell,
                                       inputs=input,
                                       sequence_length=seq_len,
@@ -69,5 +69,6 @@ class RowlessModel(object):
 
 
 r = RowlessModel(12,20,[2,3,4],[4,6,7],[1,2,3])
+print (tf.__version__)
 print ("OK")
 
