@@ -51,6 +51,16 @@ class RowlessModel(object):
     def train(self):
         pass
 
+## Preprocessing functions ##
+def preprocess_file(f):
+    """Returns np.array [9 x n_sents]. Columns : [e1,e1_str,e1_start_idx,e1_end_idx,e2,e2_str,e2_start_idx,e2_end_idx,sent]"""
+    with open(f,'rb') as f:
+        test_lines = [(str(codecs.unicode_escape_decode(str(i)[2:-3])[0])[1:].split('\t')) for i in f.readlines()]
+    test_lines = np.array([i for i in test_lines if len(i)==13])
+    ip = test_lines.T
+    ip[12] = np.array([re.sub('[^\w\s]','',i.lower()) for i in ip[12]])
+    return ip[[0,2,3,4,5,7,8,9,12]]
+
     # # verify whether the variables are reused
     # for v in tf.global_variables():
     #    print(v.name)
@@ -66,9 +76,6 @@ class RowlessModel(object):
     # # train
     # sess.run(train_op, feed_dict{input_1: in1, input_2: in2, input_3:in3, labels: ...}
 
-
-
 r = RowlessModel(12,20,[2,3,4],[4,6,7],[1,2,3])
 print (tf.__version__)
 print ("OK")
-

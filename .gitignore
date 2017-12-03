@@ -19,3 +19,4 @@ bin-release/
 # information for Eclipse / Flash Builder.
 
 *data/*
+*.ipynb_checkpoints*
