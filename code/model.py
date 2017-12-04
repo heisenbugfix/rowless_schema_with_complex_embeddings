@@ -12,7 +12,7 @@ class RowlessModel(object):
 
         # For training KB relation embeddings
         if kb_relation_use:
-            assert embedding_size==num_units
+            assert embedding_size == num_units
             assert vocab_size is not None
             self.vocab_size = vocab_size
             if embedding_size is None:
@@ -85,8 +85,9 @@ class RowlessModel(object):
 
     # Loss function
     def loss(self):
-        self.loss_sentence = tf.log(
-            tf.sigmoid(tf.matmul(self.out_input_1, self.out_input_2) - tf.matmul(self.out_input_1, self.out_input_3)))
+        self.loss_sentence = -tf.log(
+            tf.sigmoid(tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_2), axis=1, keep_dims=True) -
+                       tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_2), axis=1, keep_dims=True)))
 
     def train(self):
         pass
@@ -117,6 +118,6 @@ class RowlessModel(object):
         # sess.run(train_op, feed_dict{input_1: in1, input_2: in2, input_3:in3, labels: ...}
 
 
-r = RowlessModel(12, 20, [2, 3, 4], [4, 6, 7], [1, 2, 3],True,10,20)
+r = RowlessModel(12, 20, [2, 3, 4], [4, 6, 7], [1, 2, 3], True, 10, 20)
 print(tf.__version__)
 print("OK")
