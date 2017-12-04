@@ -12,6 +12,7 @@ class RowlessModel(object):
 
         # For training KB relation embeddings
         if kb_relation_use:
+            assert embedding_size==num_units
             assert vocab_size is not None
             assert rel_ids is not None
             self.vocab_size = vocab_size
@@ -22,12 +23,14 @@ class RowlessModel(object):
                 self.embedding_size = embedding_size
 
         self.create_kb_embeddings(kb_relation_use)
+        self.create_placeholders_kb(kb_relation_use)
+        self.create_kb_outputs()
         self.wordvec_dim = wordvecdim
         self.num_units = num_units
         self.seq_len1 = seq1
         self.seq_len2 = seq2
         self.seq_len3 = seq3
-        self.create_placeholders()
+        self.create_placeholders_lstm()
         self.create_lstm_outputs()
         self.loss()
         self.sess = tf.Session()
@@ -42,6 +45,8 @@ class RowlessModel(object):
             self.rel_embeddings = tf.get_variable("relation_embeddings",
                                                   [self.vocab_size, self.embedding_size], dtype=tf.float32)
             self.emb_rel_ids = tf.nn.embedding_lookup(self.rel_embeddings, self.rel_ids)
+            # embedding_aggregated = tf.reduce_sum(self.emb_rel_ids, [1])
+            print ("OK")
 
     # generate the outputs for each input
     def create_lstm_outputs(self):
@@ -52,11 +57,25 @@ class RowlessModel(object):
             scope.reuse_variables()
             self.out_input_3 = self.lstm_share(self.num_units, self.input_3, self.seq_len3)
 
-    # Placeholders for input data
-    def create_placeholders(self):
+    def create_kb_outputs(self):
+        with tf.variable_scope('shared_kb') as scope:
+            #TODO: Figure out a way to use the embedding_lookup as output and connect to input graph
+            self.out_r2 = self.emb_rel_ids[0]
+            scope.reuse_variables()  # the variables will be reused.
+            self.out_r3 = self.emb_rel_ids[1]
+            print ("OK")
+
+    # Placeholders for input data to LSTM
+    def create_placeholders_lstm(self):
         self.input_1 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s1")
         self.input_2 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s2")
         self.input_3 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s3")
+
+    # Placeholders for relation as input data
+    def create_placeholders_kb(self, kb_relation_use=False):
+        if kb_relation_use:
+            self.input_2_r2 = tf.placeholder(tf.int32, [None, 1], name="r2")
+            self.input_3_r3 = tf.placeholder(tf.int32, [None, 1], name="r3")
 
     # create a shared rnn layer
     def lstm_share(self, num_units, input, seq_len):
@@ -65,7 +84,6 @@ class RowlessModel(object):
                                        inputs=input,
                                        sequence_length=seq_len,
                                        dtype=tf.float32,
-                                       initial_state=tf.random_normal_initializer()
                                        )
 
         return outputs[-1]
@@ -104,6 +122,6 @@ class RowlessModel(object):
         # sess.run(train_op, feed_dict{input_1: in1, input_2: in2, input_3:in3, labels: ...}
 
 
-r = RowlessModel(12, 20, [2, 3, 4], [4, 6, 7], [1, 2, 3])
+r = RowlessModel(12, 20, [2, 3, 4], [4, 6, 7], [1, 2, 3],True,10,20,[0,1,2,3])
 print(tf.__version__)
 print("OK")
