@@ -84,13 +84,13 @@ class RowlessModel(object):
     # Loss function
     def loss(self):
         self.loss_sentence = tf.log(tf.sigmoid(tf.matmul(self.out_input_1, self.out_input_3) - tf.matmul(self.out_input_1, self.out_input_2)))
-        if kb_relation_use:
+        if self.kb_relation_use:
             self.loss_relation_1 = tf.log(tf.sigmoid(tf.matmul(self.out_input_1, self.out_input_3) - tf.matmul(self.out_input_1, self.out_r2)))
             self.loss_relation_2 = tf.log(tf.sigmoid(tf.matmul(self.out_input_1, self.out_r3) - tf.matmul(self.out_input_1, self.out_input_2)))
 
     def train(self,type_1,type_2,type_3):
         self.train_step_1 = tf.train.AdamOptimizer().minimize(self.loss_sentence)
-        if kb_relation_use:
+        if self.kb_relation_use:
             self.train_step_2 = tf.train.AdamOptimizer().minimize(self.loss_relation_1)
             self.train_step_3 = tf.train.AdamOptimizer().minimize(self.loss_relation_2)
 
