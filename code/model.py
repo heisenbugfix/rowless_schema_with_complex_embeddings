@@ -5,7 +5,7 @@ import tensorflow as tf
 class RowlessModel(object):
     # Create input placeholder for the network
     def __init__(self, wordvecdim, num_units, seq1, seq2=None, seq3=None, kb_relation_use=False,
-                 vocab_size=None, embedding_size=None, rel_ids=None, mode="train"):
+                 vocab_size=None, embedding_size=None, mode="train"):
         if mode == "train":
             assert seq2 is not None
             assert seq3 is not None
@@ -14,15 +14,12 @@ class RowlessModel(object):
         if kb_relation_use:
             assert embedding_size==num_units
             assert vocab_size is not None
-            assert rel_ids is not None
             self.vocab_size = vocab_size
-            self.rel_ids = rel_ids
             if embedding_size is None:
                 self.embedding_size = 50
             else:
                 self.embedding_size = embedding_size
-
-        self.create_kb_embeddings(kb_relation_use)
+        self.kb_relation_use = kb_relation_use
         self.create_placeholders_kb(kb_relation_use)
         self.create_kb_outputs()
         self.wordvec_dim = wordvecdim
@@ -40,13 +37,13 @@ class RowlessModel(object):
             print(v.name)
 
     # Create KB embeddings
-    def create_kb_embeddings(self, kb_relation_use=False):
-        if kb_relation_use:
+    def create_kb_embeddings(self, rel_ids):
+        if self.kb_relation_use:
             self.rel_embeddings = tf.get_variable("relation_embeddings",
                                                   [self.vocab_size, self.embedding_size], dtype=tf.float32)
-            self.emb_rel_ids = tf.nn.embedding_lookup(self.rel_embeddings, self.rel_ids)
+            emb_rel_ids = tf.nn.embedding_lookup(self.rel_embeddings, rel_ids)
             # embedding_aggregated = tf.reduce_sum(self.emb_rel_ids, [1])
-            print ("OK")
+            return emb_rel_ids
 
     # generate the outputs for each input
     def create_lstm_outputs(self):
@@ -59,11 +56,9 @@ class RowlessModel(object):
 
     def create_kb_outputs(self):
         with tf.variable_scope('shared_kb') as scope:
-            #TODO: Figure out a way to use the embedding_lookup as output and connect to input graph
-            self.out_r2 = self.emb_rel_ids[0]
+            self.out_r2 = self.create_kb_embeddings(self.input_2_r2)
             scope.reuse_variables()  # the variables will be reused.
-            self.out_r3 = self.emb_rel_ids[1]
-            print ("OK")
+            self.out_r3 = self.create_kb_embeddings(self.input_3_r3)
 
     # Placeholders for input data to LSTM
     def create_placeholders_lstm(self):
@@ -122,6 +117,6 @@ class RowlessModel(object):
         # sess.run(train_op, feed_dict{input_1: in1, input_2: in2, input_3:in3, labels: ...}
 
 
-r = RowlessModel(12, 20, [2, 3, 4], [4, 6, 7], [1, 2, 3],True,10,20,[0,1,2,3])
+r = RowlessModel(12, 20, [2, 3, 4], [4, 6, 7], [1, 2, 3],True,10,20)
 print(tf.__version__)
 print("OK")
