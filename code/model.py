@@ -87,12 +87,12 @@ class RowlessModel(object):
             tf.sigmoid(tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_2), axis=1, keep_dims=True) -
                        tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_3), axis=1, keep_dims=True))))
         if self.kb_relation_use:
-            self.loss_relation_1 = -tf.log(tf.sigmoid(
+            self.loss_relation_1 = tf.reduce_mean(-tf.log(tf.sigmoid(
                 tf.reduce_sum(tf.multiply(self.out_input_1, self.out_r2), axis=1, keep_dims=True) -
-                tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_3), axis=1, keep_dims=True)))
-            self.loss_relation_2 = -tf.log(tf.sigmoid(
+                tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_3), axis=1, keep_dims=True))))
+            self.loss_relation_2 = tf.reduce_mean(-tf.log(tf.sigmoid(
                 tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_2), axis=1, keep_dims=True) -
-                tf.reduce_sum(tf.multiply(self.out_input_1, self.out_r3), axis=1, keep_dims=True)))
+                tf.reduce_sum(tf.multiply(self.out_input_1, self.out_r3), axis=1, keep_dims=True))))
 
     def training(self):
         global_step_1 = tf.Variable(0,trainable=False, name='global_step_1')
