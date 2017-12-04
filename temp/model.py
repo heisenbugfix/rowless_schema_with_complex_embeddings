@@ -48,8 +48,8 @@ class RowlessModel(object):
             self.out_input_2 = self.lstm_share(self.num_units, self.input_2, self.seq_len2)
             scope.reuse_variables()
             self.out_input_3 = self.lstm_share(self.num_units, self.input_3, self.seq_len3)
-            self.out_input_2_relation = self.relation_share()
-            self.out_input_3_relation = self.relation_share()
+            self.out_input_2_relation = tf.nn.embedding_lookup(emb_rel_ids,self.input_2_relation())
+            self.out_input_3_relation = tf.nn.embedding_lookup(emb_rel_ids,self.input_3_relation())
 
     def create_placeholders(self):
         #placeholders for all kinds of input
@@ -81,9 +81,6 @@ class RowlessModel(object):
     
     def loss_util(self,emb_1,emb_2,emb_3):
         return tf.log(tf.sigmoid(tf.matmul(emb_1,emb_2) - tf.matmul(emb_1,emb_3)))
-    
-    def relation_share(self):
-        return tf.Variable(tf.truncated_normal((self.wordvec_dim),mean=0,stddev=1.5),dtype=tf.float32)
 
     def train(self):
         pass
