@@ -1,14 +1,12 @@
 import tensorflow as tf
-
+import random
+import numpy as np
 
 # TODO: Make model more generic. Need to abstractions
 class RowlessModel(object):
     # Create input placeholder for the network
-    def __init__(self, wordvecdim, num_units, seq1, seq2=None, seq3=None, kb_relation_use=False,
+    def __init__(self, wordvecdim, num_units, kb_relation_use=False,
                  vocab_size=None, embedding_size=None, mode="train"):
-        if mode == "train":
-            assert seq2 is not None
-            assert seq3 is not None
 
         # For training KB relation embeddings
         if kb_relation_use:
@@ -24,9 +22,6 @@ class RowlessModel(object):
         self.create_kb_outputs()
         self.wordvec_dim = wordvecdim
         self.num_units = num_units
-        self.seq_len1 = seq1
-        self.seq_len2 = seq2
-        self.seq_len3 = seq3
         self.create_placeholders_lstm()
         self.create_lstm_outputs()
         self.loss()
@@ -42,7 +37,6 @@ class RowlessModel(object):
             self.rel_embeddings = tf.get_variable("relation_embeddings",
                                                   [self.vocab_size, self.embedding_size], dtype=tf.float32)
             emb_rel_ids = tf.nn.embedding_lookup(self.rel_embeddings, rel_ids)
-            # embedding_aggregated = tf.reduce_sum(self.emb_rel_ids, [1])
             return emb_rel_ids
 
     # generate the outputs for each input
@@ -62,9 +56,13 @@ class RowlessModel(object):
 
     # Placeholders for input data to LSTM
     def create_placeholders_lstm(self):
+        #shape (batch_size, timesteps, wordvec_dim)
         self.input_1 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s1")
+        self.seq_len1 = tf.placeholder(tf.int32, [None])
         self.input_2 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s2")
+        self.seq_len2 = tf.placeholder(tf.int32, [None])
         self.input_3 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s3")
+        self.seq_len3 = tf.placeholder(tf.int32, [None])
 
     # Placeholders for relation as input data
     def create_placeholders_kb(self, kb_relation_use=False):
@@ -79,18 +77,57 @@ class RowlessModel(object):
                                        inputs=input,
                                        sequence_length=seq_len,
                                        dtype=tf.float32,
+                                       time_major=False
                                        )
 
-        return outputs[-1]
+        return outputs[:,-1]
 
     # Loss function
     def loss(self):
-        self.loss_sentence = -tf.log(
+        self.loss_sentence = tf.reduce_mean(-tf.log(
             tf.sigmoid(tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_2), axis=1, keep_dims=True) -
-                       tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_2), axis=1, keep_dims=True)))
+                       tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_3), axis=1, keep_dims=True))))
+        if self.kb_relation_use:
+            self.loss_relation_1 = -tf.log(tf.sigmoid(
+                tf.reduce_sum(tf.multiply(self.out_input_1, self.out_r2), axis=1, keep_dims=True) -
+                tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_3), axis=1, keep_dims=True)))
+            self.loss_relation_2 = -tf.log(tf.sigmoid(
+                tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_2), axis=1, keep_dims=True) -
+                tf.reduce_sum(tf.multiply(self.out_input_1, self.out_r3), axis=1, keep_dims=True)))
 
-    def train(self):
-        pass
+    def train(self, type_1, type_2=None, type_3=None,n_epochs=10):
+        #type_1 : (3 x batch_size x timesteps x wordvec_dim, 3 x batch_size x 1)
+        self.n_epochs = n_epochs
+        self.train_step_0 = tf.train.AdamOptimizer().minimize(self.loss_sentence)
+        if self.kb_relation_use:
+            self.train_step_1 = tf.train.AdamOptimizer().minimize(self.loss_relation_1)
+            self.train_step_2 = tf.train.AdamOptimizer().minimize(self.loss_relation_2)
+        d1,d2,d3 = type_1[0][0],type_1[0][1],type_1[0][2]
+        l1,l2,l3 = np.reshape(type_1[1][0],(-1)),np.reshape(type_1[1][1],(-1)),np.reshape(type_1[1][2],(-1))
+
+        for i in range(self.n_epochs):
+            self.sess.run(self.train_step_0,feed_dict={self.input_1:d1,self.input_2:d2,self.input_3:d3,\
+                                                       self.seq_len1:l1,self.seq_len2:l2,self.seq_len3:l3})
+        """
+        #data: dict
+            #0 : (3 x batch_size x timesteps x wordvec_dim, 3 x batch_size x 1)
+            #1 : ([batch_size x timesteps x wordvec_dim],[batch_size x wordvec_dim],[batch_size x timesteps x wordvec_dim], 2 x batch_size x 1)
+            #2 : ([batch_size x timesteps x wordvec_dim],[batch_size x wordvec_dim],[batch_size x wordvec_dim], batch_size x 1)
+        for type in range(3):
+            d1,d2,d3 = type_1[0][0],type_1[0][1],type_1[0][2] #di : [total_size x timesteps x word_vec_dim]
+            l1,l2,l3 = type_1[1][0],type_1[1][1],type_1[1][2] #li : [total_size x 1]
+        cnt = [0,0,0]
+        self.train_step = [None, None, None]
+        self.train_step[0] = tf.train.AdamOptimizer().minimize(self.loss_sentence)
+        if self.kb_relation_use:
+            self.train_step[1] = tf.train.AdamOptimizer().minimize(self.loss_relation_1)
+            self.train_step[2] = tf.train.AdamOptimizer().minimize(self.loss_relation_2)
+        for i in range(self.n_epochs):
+            type = random.randint(0,2)
+            if type==0:
+                self.sess.run(self.train_step_1,feed_dict={self.input_1:d1,self.input_2:d2,self.input_3:d3,\
+                                                       self.seq_len1:l1,self.seq_len2:l2,self.seq_len3:l3})
+        """
 
         # ## Preprocessing functions ##
         # def preprocess_file(f):
@@ -117,7 +154,21 @@ class RowlessModel(object):
         # # train
         # sess.run(train_op, feed_dict{input_1: in1, input_2: in2, input_3:in3, labels: ...}
 
-
 r = RowlessModel(12, 20, [2, 3, 4], [4, 6, 7], [1, 2, 3], True, 10, 20)
+# type_1 : 3 x batch_size x wordvec_dim
+batch_size = 10
+wordvec_dim = 12
+time_steps = 5
+type_1 = (np.array([[[[random.randint(0,10) for k in range(wordvec_dim)] for l in range(time_steps)] for j in range(batch_size)] for i in range(3)]),\
+    np.array([[5 for i in range(batch_size)] for i in range(3)]))
+print(type_1[0].shape,type_1[1].shape)
+d1,d2,d3 = type_1[0][0],type_1[0][1],type_1[0][2]
+l1, l2, l3 = np.reshape(type_1[1][0],(-1)), np.reshape(type_1[1][1],(-1)), np.reshape(type_1[1][2],(-1))
+d1_ = np.copy(d1)
+d2_ = np.copy(d2)
+d3_ = np.copy(d3)
+print(r.sess.run(r.loss_sentence,feed_dict={r.input_1:d1_,r.input_2:d2_,r.input_3:d3_,r.seq_len1:l1,r.seq_len2:l1,r.seq_len3:l3}))
+r.train(type_1)
+print(r.sess.run(r.loss_sentence,feed_dict={r.input_1:d1,r.input_2:d2,r.input_3:d3}))
 print(tf.__version__)
 print("OK")
