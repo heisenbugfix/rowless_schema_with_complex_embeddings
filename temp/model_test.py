@@ -3,7 +3,7 @@ sys.path.insert(0,'../code')
 import tensorflow as tf
 import numpy as np
 import random
-from model import *
+from temp.model_grad_change_ashish import RowlessModel
 """
 d1,d2,d3 = type_1[0][0],type_1[0][1],type_1[0][2]
 l1,l2,l3 = np.reshape(type_1[1][0],(-1)),np.reshape(type_1[1][1],(-1)),np.reshape(type_1[1][2],(-1))
