@@ -20,6 +20,7 @@ class RowlessModel(object):
         self.create_kb_outputs()
         self.wordvec_dim = wordvecdim
         self.num_units = num_units
+        self.create_placeholders_flags()
         self.create_placeholders_lstm()
         self.create_lstm_outputs()
         self.loss()
@@ -53,6 +54,10 @@ class RowlessModel(object):
             scope.reuse_variables()  # the variables will be reused.
             self.out_r3 = self.create_kb_embeddings(self.input_3_r3)
 
+    def create_placeholders_flags(self):
+        self.f1 = tf.placeholder(tf.int32,[1],name="f1")
+        self.f2 = tf.placeholder(tf.int32,[1],name="f2")
+
     # Placeholders for input data to LSTM
     def create_placeholders_lstm(self):
         #shape (batch_size, timesteps, wordvec_dim)
@@ -79,35 +84,21 @@ class RowlessModel(object):
                                        time_major=False
                                        )
 
-        return outputs[:,-1]
+        return outputs[:, -1]
 
     # Loss function
     def loss(self):
-        self.loss_sentence = tf.reduce_mean(-tf.log(
-            tf.sigmoid(
+        # f1 True: embedding 2 is sentence embedding
+        # f1 False: embedding 2 is relation embedding
+        # f2 True: embedding 3 is sentence embedding
+        # f2 False: embedding 3 is relation embedding
+        self.loss_sentence = tf.reduce_mean(-tf.log(tf.sigmoid(
                 (self.f1 * tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_2), axis=1, keep_dims=True)
                  + (1-self.f1) * tf.reduce_sum(tf.multiply(self.out_input_1, self.out_r2), axis=1, keep_dims=True))
                 -
                 (self.f2*tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_3), axis=1, keep_dims=True)
                  + (1-self.f2)*tf.reduce_sum(tf.multiply(self.out_input_1, self.out_r3), axis=1, keep_dims=True))
             )))
-        self.loss_sentence = tf.reduce_mean(-tf.log(
-            tf.sigmoid(tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_2), axis=1, keep_dims=True) -
-                       tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_3), axis=1, keep_dims=True))))
-        if self.kb_relation_use:
-            self.loss_relation_1 = tf.reduce_mean(-tf.log(tf.sigmoid(
-                tf.reduce_sum(tf.multiply(self.out_input_1, self.out_r2), axis=1, keep_dims=True) -
-                tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_3), axis=1, keep_dims=True))))
-            self.loss_relation_2 = tf.reduce_mean(-tf.log(tf.sigmoid(
-                tf.reduce_sum(tf.multiply(self.out_input_1, self.out_input_2), axis=1, keep_dims=True) -
-                tf.reduce_sum(tf.multiply(self.out_input_1, self.out_r3), axis=1, keep_dims=True))))
 
     def training(self):
-        global_step_1 = tf.Variable(0,trainable=False, name='global_step_1')
-        self.train_opt_1 = tf.train.AdamOptimizer().minimize(self.loss_sentence, global_step=global_step_1)
-        grads = self.train_opt_1.compute_gradients()
-        if self.kb_relation_use:
-            global_step_2 = tf.Variable(0, trainable=False, name='global_step_2')
-            self.train_opt_2 = tf.train.AdamOptimizer().minimize(self.loss_relation_1, global_step=global_step_2)
-            global_step_3 = tf.Variable(0, trainable=False, name='global_step_3')
-            self.train_opt_3 = tf.train.AdamOptimizer().minimize(self.loss_relation_2, global_step=global_step_3)
+        pass
