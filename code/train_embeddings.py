@@ -1,4 +1,3 @@
-import codecs
 import numpy as np
 import pandas as pd
 import re
@@ -20,6 +19,7 @@ def make_text_transcript(sents_files, max_sentence_size=0, text_transcript_overw
             test_lines = np.array([i[-1] for i in test_lines if len(i)==13])
             max_sentence_size = max([len(i.split(' ')) for i in test_lines]+[max_sentence_size])
             text = ' '.join(test_lines)
+            text = text.encode('utf-8')
             with open(data_path+'temp/text_transcript.txt','at') as f:
                 f.write(text+' ')
         except FileNotFoundError:
