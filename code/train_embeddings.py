@@ -16,7 +16,7 @@ def make_text_transcript(sents_files, max_sentence_size=0, text_transcript_overw
     for sent_file in sents_files:
         try:
             with open(sent_file,'rb') as f:
-                test_lines = [(str(codecs.unicode_escape_decode(str(i)[2:-3])[0])[1:].split('\t')) for i in f.readlines()]
+                test_lines = [i.decode().strip().split('\t') for i in f.readlines()]
             test_lines = np.array([i[-1] for i in test_lines if len(i)==13])
             max_sentence_size = max([len(i.split(' ')) for i in test_lines]+[max_sentence_size])
             text = ' '.join(test_lines)
