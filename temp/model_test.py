@@ -30,7 +30,7 @@ for i in range(self.n_epochs):
         self.sess.run(self.train_step_1,feed_dict={self.input_1:d1,self.input_2:d2,self.input_3:d3,\
                                                self.seq_len1:l1,self.seq_len2:l2,self.seq_len3:l3})
 """
-r = RowlessModel(12, 20, True, 10, 20)
+r = RowlessModel(12, 20,10, 20, emb_type="real")
 # type_1 : 3 x batch_size x wordvec_dim
 batch_size = 10
 wordvec_dim = 12
