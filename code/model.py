@@ -1,10 +1,11 @@
 import tensorflow as tf
 
+
 # TODO: Make model more generic. Need to abstractions
 class RowlessModel(object):
     # Create input placeholder for the network
     def __init__(self, wordvecdim, num_units, kb_relation_use=False,
-                 vocab_size=None, embedding_size=None, mode="train"):
+                 vocab_size=None, embedding_size=None, mode="train", emb_type="real"):
 
         # For training KB relation embeddings
         if kb_relation_use:
@@ -15,6 +16,8 @@ class RowlessModel(object):
                 self.embedding_size = 50
             else:
                 self.embedding_size = embedding_size
+
+        self.emb_type = emb_type
         self.kb_relation_use = kb_relation_use
         self.create_conditional_placeholders()
         self.create_placeholders_kb(kb_relation_use)
@@ -23,7 +26,10 @@ class RowlessModel(object):
         self.num_units = num_units
         self.create_placeholders_lstm()
         self.create_lstm_outputs()
-        self.create_outputs_for_loss()
+        self.create_outputs_for_real_loss()
+        # Add layer for complex embedding
+        if self.emb_type == "complex":
+            self.create_outputs_for_complex_loss()
         self.loss()
         self.training()
         self.sess = tf.Session()
@@ -63,7 +69,7 @@ class RowlessModel(object):
 
     # Placeholders for input data to LSTM
     def create_placeholders_lstm(self):
-        #shape (batch_size, timesteps, wordvec_dim)
+        # shape (batch_size, timesteps, wordvec_dim)
         self.input_1 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s1")
         self.seq_len1 = tf.placeholder(tf.int32, [None])
         self.input_2 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s2")
@@ -87,30 +93,58 @@ class RowlessModel(object):
                                        time_major=False
                                        )
 
-        return outputs[:,-1]
+        return outputs[:, -1]
+
+    # Creating embedding for complex layers
+    def create_complex_embeddings(self, input_dat, name):
+        weight = tf.get_variable(name=name + "_ce_weights", shape=[self.embedding_size, self.embedding_size])
+        bias = tf.get_variable(name=name + "_ce_bias", shape=[self.embedding_size])
+        out = tf.nn.relu(tf.matmul(input_dat, weight) + bias)
+        return out
+
+    # Creating complex embedding layer
+    def create_outputs_for_complex_loss(self):
+        with tf.variable_scope('shared_complex_emb') as scope:
+            self.out_1_real = self.create_complex_embeddings(self.out_1, "real")
+            self.out_1_im = self.create_complex_embeddings(self.out_1, "complex")
+            scope.reuse_variables()  # Reusing the real and imaginary emb weights across all outputs
+            self.out_2_real = self.create_complex_embeddings(self.out_2, "real")
+            self.out_2_im = self.create_complex_embeddings(self.out_2, "complex")
+            scope.reuse_variables()
+            self.out_3_real = self.create_complex_embeddings(self.out_3, "real")
+            self.out_3_im = self.create_complex_embeddings(self.out_3, "complex")
 
     # Creating final outputs that will go in the loss function
-    def create_outputs_for_loss(self):
+    def create_outputs_for_real_loss(self):
         self.out_1 = self.out_lstm_1
         self.out_2 = tf.where(self.use_LSTM_2, self.out_lstm_2, self.out_r2)
         self.out_3 = tf.where(self.use_LSTM_3, self.out_lstm_3, self.out_r3)
 
     # Loss function
     def loss(self):
-        self.loss = tf.reduce_mean(-tf.log(
-            tf.sigmoid(tf.reduce_sum(tf.multiply(self.out_1, self.out_2), axis=1, keep_dims=True) -
-                       tf.reduce_sum(tf.multiply(self.out_1, self.out_3), axis=1, keep_dims=True))))
-        # self.loss_sentence = tf.reduce_mean(-tf.log(
-        #     tf.sigmoid(tf.reduce_sum(tf.multiply(self.out_lstm_1, self.out_lstm_2), axis=1, keep_dims=True) -
-        #                tf.reduce_sum(tf.multiply(self.out_lstm_1, self.out_lstm_3), axis=1, keep_dims=True))))
-        # if self.kb_relation_use:
-        #     self.loss_relation_1 = tf.reduce_mean(-tf.log(tf.sigmoid(
-        #         tf.reduce_sum(tf.multiply(self.out_lstm_1, self.out_r2), axis=1, keep_dims=True) -
-        #         tf.reduce_sum(tf.multiply(self.out_lstm_1, self.out_lstm_3), axis=1, keep_dims=True))))
-        #     self.loss_relation_2 = tf.reduce_mean(-tf.log(tf.sigmoid(
-        #         tf.reduce_sum(tf.multiply(self.out_lstm_1, self.out_lstm_2), axis=1, keep_dims=True) -
-        #         tf.reduce_sum(tf.multiply(self.out_lstm_1, self.out_r3), axis=1, keep_dims=True))))
+        if self.emb_type == "real":
+            self.loss = tf.reduce_mean(-tf.log(
+                tf.sigmoid(tf.reduce_sum(tf.multiply(self.out_1, self.out_2), axis=1, keep_dims=True) -
+                           tf.reduce_sum(tf.multiply(self.out_1, self.out_3), axis=1, keep_dims=True))))
+        elif self.emb_type == "complex":
+            r1_r2 = tf.reduce_sum(self.out_1_real * self.out_2_real, axis=1) + \
+                        tf.reduce_sum(self.out_1_im * self.out_1_im, axis=1)
+            r1_r3 = tf.reduce_sum(self.out_1_real * self.out_3_real, axis=1) + \
+                        tf.reduce_sum(self.out_1_im * self.out_3_im, axis=1)
+            self.loss = tf.reduce_mean(r1_r2 - r1_r3)
+
+
+            # self.loss_sentence = tf.reduce_mean(-tf.log(
+            #     tf.sigmoid(tf.reduce_sum(tf.multiply(self.out_lstm_1, self.out_lstm_2), axis=1, keep_dims=True) -
+            #                tf.reduce_sum(tf.multiply(self.out_lstm_1, self.out_lstm_3), axis=1, keep_dims=True))))
+            # if self.kb_relation_use:
+            #     self.loss_relation_1 = tf.reduce_mean(-tf.log(tf.sigmoid(
+            #         tf.reduce_sum(tf.multiply(self.out_lstm_1, self.out_r2), axis=1, keep_dims=True) -
+            #         tf.reduce_sum(tf.multiply(self.out_lstm_1, self.out_lstm_3), axis=1, keep_dims=True))))
+            #     self.loss_relation_2 = tf.reduce_mean(-tf.log(tf.sigmoid(
+            #         tf.reduce_sum(tf.multiply(self.out_lstm_1, self.out_lstm_2), axis=1, keep_dims=True) -
+            #         tf.reduce_sum(tf.multiply(self.out_lstm_1, self.out_r3), axis=1, keep_dims=True))))
 
     def training(self):
-        global_step_1 = tf.Variable(0,trainable=False, name='global_step_1')
+        global_step_1 = tf.Variable(0, trainable=False, name='global_step_1')
         self.train_opt = tf.train.AdamOptimizer().minimize(self.loss, global_step=global_step_1)
