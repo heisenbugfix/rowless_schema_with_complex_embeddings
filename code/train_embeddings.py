@@ -25,6 +25,7 @@ def make_text_transcript(sents_files, max_sentence_size=0, text_transcript_overw
         except FileNotFoundError:
             print(sent_file,'does not exist')
         gc.collect()
+        print(sent_file,'processed')
     return max_sentence_size
 
 files = [(org_data_path+'kb_0'+str(i)) if i<10 else (org_data_path+'kb_'+str(i)) for i in range(20)]
@@ -33,5 +34,7 @@ max_sent_size = make_text_transcript(files)
 with open(data_path+'temp/max_sent_size.txt','wt') as f:
     f.write(str(max_sent_size))
 
+print('Starting training of embeddings..')
 import fasttext
 embeddings_model = fasttext.skipgram(data_path+'temp/text_transcript.txt',data_path+'temp/embeddings_model_2',min_count=1,dim=embeddings_size)
+print('completed training of embeddings..')

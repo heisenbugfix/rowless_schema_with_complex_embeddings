@@ -88,25 +88,10 @@ def preprocess_file(f, embeddings_model, embeddings_size, max_sent_size):
     
     return test_lines[:,[0,4]],emb,seq_lens
 
-def create_entity_pairs_dict_and_table(preprocessed_sents, e1_idx=0, e2_idx=4):
-    """
-    Creates a dict for all the sentences with the same entity pairs.
-    Key : <e1,e2>
-    Values : [s1, s2, ...]
-    """
-    d = dict()
-    for s in preprocessed_sents:
-        key = (s[e1_idx],s[e2_idx])
-        if key in d:
-            d[key] = np.append(d[key],s)
-        else:
-            d[key] = np.array([s])
-    return d
-
 def create_entity_pairs_vocab(preprocessed_sents, e1_idx=0, e2_idx=4):
     return {tuple(i) for i in preprocessed_sents[:,[e1_idx,e2_idx]]}
 
-def create_entity_pairs_index(sents, e1_idx=0, e2_idx=4):
+def create_entity_pairs_index(entity_pairs_index):
     """
     Creates a dict for indexes of all the sentences with the same entity pairs.
     Key : <e1,e2>
@@ -115,15 +100,15 @@ def create_entity_pairs_index(sents, e1_idx=0, e2_idx=4):
     e2_idx: the index with the identity of entity 2 in preprocessed sentences
     """ 
     d = dict()
-    for idx,s in enumerate(preprocessed_sents):
-        key = (s[e1_idx],s[e2_idx])
+    for idx,ep in enumerate(entity_pairs_index):
+        key = (ep[0],ep[1])
         if key in d:
             d[key] = np.append(d[key],idx)
         else:
             d[key] = np.array([idx])
     return d
 
-def create_sentences_tuples(sents_embeddings, entity_pairs_index, max_pos_sample_size, neg_sample_size):
+def create_sentences_tuples(entity_pairs_index, sents_embeddings, max_pos_sample_size, neg_sample_size_sent, neg_sample_size_rel):
     # TODO:
     # - make neg_sample_size pairs with same sentences, with a diff neg sample for each
     # - with entity pairs with more than max_pos_sample_size, make only max_pos_sample_size*neg_sample_size sentences
