@@ -44,8 +44,8 @@ class RowlessModel(object):
 
     # Creating conditional placeholders for switching inputs between LSTM and KB Embeddings
     def create_conditional_placeholders(self):
-        self.use_LSTM_2 = tf.placeholder(tf.bool)
-        self.use_LSTM_3 = tf.placeholder(tf.bool)
+        self.use_LSTM_2 = tf.placeholder(tf.bool, shape=[None,])
+        self.use_LSTM_3 = tf.placeholder(tf.bool, shape=[None,])
 
     # generate the outputs for each input
     def create_lstm_outputs(self):
