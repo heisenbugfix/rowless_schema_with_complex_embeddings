@@ -50,11 +50,11 @@ class RowlessModel(object):
     # generate the outputs for each input
     def create_lstm_outputs(self):
         with tf.variable_scope('shared_lstm') as scope:
-            self.out_lstm_1 = self.lstm_share(self.num_units, self.input_1, self.seq_len1)
+            self.out_lstm_1 = self.lstm_share(self.num_units, self.input_LSTM_1, self.seq_len_LSTM_1)
             scope.reuse_variables()  # the variables will be reused.
-            self.out_lstm_2 = self.lstm_share(self.num_units, self.input_2, self.seq_len2)
+            self.out_lstm_2 = self.lstm_share(self.num_units, self.input_LSTM_2, self.seq_len_LSTM_2)
             scope.reuse_variables()
-            self.out_lstm_3 = self.lstm_share(self.num_units, self.input_3, self.seq_len3)
+            self.out_lstm_3 = self.lstm_share(self.num_units, self.input_LSTM_3, self.seq_len_LSTM_3)
 
     def create_kb_outputs(self):
         with tf.variable_scope('shared_kb') as scope:
@@ -65,12 +65,12 @@ class RowlessModel(object):
     # Placeholders for input data to LSTM
     def create_placeholders_lstm(self):
         # shape (batch_size, timesteps, wordvec_dim)
-        self.input_1 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s1")
-        self.seq_len1 = tf.placeholder(tf.int32, [None])
-        self.input_2 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s2")
-        self.seq_len2 = tf.placeholder(tf.int32, [None])
-        self.input_3 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s3")
-        self.seq_len3 = tf.placeholder(tf.int32, [None])
+        self.input_LSTM_1 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s1")
+        self.seq_len_LSTM_1 = tf.placeholder(tf.int32, [None])
+        self.input_LSTM_2 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s2")
+        self.seq_len_LSTM_2 = tf.placeholder(tf.int32, [None])
+        self.input_LSTM_3 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s3")
+        self.seq_len_LSTM_3 = tf.placeholder(tf.int32, [None])
 
     # Placeholders for relation as input data
     def create_placeholders_kb(self):
