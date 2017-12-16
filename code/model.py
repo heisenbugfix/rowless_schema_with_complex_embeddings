@@ -4,7 +4,7 @@ import tensorflow as tf
 # TODO: Make model more generic. Need to abstractions
 class RowlessModel(object):
     # Create input placeholder for the network
-    def __init__(self, wordvecdim, num_units, vocab_size=None, embedding_size=None, mode="train", emb_type="real"):
+    def __init__(self, wordvecdim, num_units, vocab_size=None, embedding_size=None, emb_type="real"):
 
         assert embedding_size == num_units
         assert vocab_size is not None
