@@ -131,7 +131,7 @@ class RowlessModel(object):
                         tf.reduce_sum(self.out_1_im * self.out_1_im, axis=1)
             r1_r3 = tf.reduce_sum(self.out_1_real * self.out_3_real, axis=1) + \
                         tf.reduce_sum(self.out_1_im * self.out_3_im, axis=1)
-            self.loss = tf.reduce_mean(r1_r2 - r1_r3)
+            self.loss = tf.reduce_mean(-tf.log(tf.sigmoid(r1_r2 - r1_r3)))
 
 
             # self.loss_sentence = tf.reduce_mean(-tf.log(
