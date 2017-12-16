@@ -1,4 +1,10 @@
-org_data_path = '/iesl/canvas/aranjan/rowless/all_data/kb_eps_only'
+import codecs
+import numpy as np
+import pandas as pd
+import re
+import gc
+
+org_data_path = '/iesl/canvas/aranjan/rowless/all_data/kb_eps_only/'
 data_path = '/iesl/canvas/aranjan/rowless/'
 
 embeddings_size = 25
@@ -23,6 +29,9 @@ def make_text_transcript(sents_files, max_sentence_size=0, text_transcript_overw
 
 files = [(org_data_path+'kb_0'+str(i)) if i<10 else (org_data_path+'kb_'+str(i)) for i in range(20)]
 max_sent_size = make_text_transcript(files)
+
+with open(data_path+'temp/max_sent_size.txt','wt') as f:
+    f.write(str(max_sent_size))
 
 import fasttext
 embeddings_model = fasttext.skipgram(data_path+'temp/text_transcript.txt',data_path+'temp/embeddings_model_2',min_count=1,dim=embeddings_size)

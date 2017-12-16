@@ -127,7 +127,7 @@ def create_sentences_tuples(sents_embeddings, entity_pairs_index, max_pos_sample
     # TODO:
     # - make neg_sample_size pairs with same sentences, with a diff neg sample for each
     # - with entity pairs with more than max_pos_sample_size, make only max_pos_sample_size*neg_sample_size sentences
-    tuples = np.zeros([1,sents_embeddings])
+    tuples = np.array()
     for ent_pair, idxs in entity_pairs_index:
         idxs = idxs[:max_pos_sample_size]
         for same_pair_idx in idxs:
