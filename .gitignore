@@ -23,3 +23,5 @@ bin-release/
 *.ipynb
 *.idea
 *pycache*
+*.pyc
+*remove_me*

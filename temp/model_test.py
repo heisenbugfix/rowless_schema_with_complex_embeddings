@@ -3,7 +3,7 @@ sys.path.insert(0,'../code')
 import tensorflow as tf
 import numpy as np
 import random
-from temp.model_grad_change_ashish import RowlessModel
+from model_grad_change import RowlessModel
 """
 d1,d2,d3 = type_1[0][0],type_1[0][1],type_1[0][2]
 l1,l2,l3 = np.reshape(type_1[1][0],(-1)),np.reshape(type_1[1][1],(-1)),np.reshape(type_1[1][2],(-1))
@@ -40,9 +40,12 @@ type_1 = (np.array([[[[random.randint(0,10) for k in range(wordvec_dim)] for l i
 print(type_1[0].shape,type_1[1].shape)
 d1,d2,d3 = type_1[0][0],type_1[0][1],type_1[0][2]
 l1, l2, l3 = np.reshape(type_1[1][0],(-1)), np.reshape(type_1[1][1],(-1)), np.reshape(type_1[1][2],(-1))
-d1_ = np.copy(d1)
-d2_ = np.copy(d2)
-d3_ = np.copy(d3)
-print(r.sess.run(r.loss_sentence,feed_dict={r.input_1:d1_,r.input_2:d2_,r.input_3:d3_,r.seq_len1:l1,r.seq_len2:l1,r.seq_len3:l3}))
+print(d1.shape)
+r2 = np.array([[0 for i in range(wordvec_dim)] for i in range(batch_size)])
+r3 = np.array([[0 for i in range(wordvec_dim)] for i in range(batch_size)])
+print(r.sess.run(r.loss_sentence,feed_dict={r.f1:[1], r.f2:[1],\
+                                            r.input_1:d1, r.input_2:d2, r.input_3:d3,\
+                                            r.seq_len1:l1, r.seq_len2:l1, r.seq_len3:l3,\
+                                            r.input_2_r2:r2, r.input_3_r3:r3}))
 print(tf.__version__)
 print("OK")

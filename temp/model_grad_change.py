@@ -55,8 +55,8 @@ class RowlessModel(object):
             self.out_r3 = self.create_kb_embeddings(self.input_3_r3)
 
     def create_placeholders_flags(self):
-        self.f1 = tf.placeholder(tf.int32,[1],name="f1")
-        self.f2 = tf.placeholder(tf.int32,[1],name="f2")
+        self.f1 = tf.placeholder(tf.float32,[1],name="f1")
+        self.f2 = tf.placeholder(tf.float32,[1],name="f2")
 
     # Placeholders for input data to LSTM
     def create_placeholders_lstm(self):
@@ -70,6 +70,7 @@ class RowlessModel(object):
 
     # Placeholders for relation as input data
     def create_placeholders_kb(self, kb_relation_use=False):
+        #shape (batch_size, wordvec_dim)
         if kb_relation_use:
             self.input_2_r2 = tf.placeholder(tf.int32, [None, 1], name="r2")
             self.input_3_r3 = tf.placeholder(tf.int32, [None, 1], name="r3")
