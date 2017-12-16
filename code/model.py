@@ -130,3 +130,4 @@ class RowlessModel(object):
     def training(self):
         global_step_1 = tf.Variable(0, trainable=False, name='global_step_1')
         self.train_opt = tf.train.AdamOptimizer().minimize(self.loss, global_step=global_step_1)
+        self.saver = tf.train.Saver()
