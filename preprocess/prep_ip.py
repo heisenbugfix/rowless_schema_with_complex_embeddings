@@ -3,6 +3,8 @@ import pandas as pd
 import re
 import gc
 
+data_path = '../data/'
+
 def get_e1_embedding(embeddings_size):
     return np.append(np.ones(int(embeddings_size/2)),np.zeros(embeddings_size-(int(embeddings_size/2))))
 
