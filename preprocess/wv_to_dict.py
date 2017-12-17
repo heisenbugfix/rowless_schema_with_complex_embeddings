@@ -22,7 +22,15 @@ id_to_emb_map = dict()
 
 word_to_id_map[''] = 0
 
-words = embeddings_model.words
+
+words = set()
+with open(org_data_path+'kb_train_65','rb') as f:
+	for line in f:
+		words.update(line.decode('latin1').strip().split('\t')[-1].split(' '))
+with open(org_data_path+'kb_test_65','rb') as f:
+	for line in f:
+		words.update(line.decode('latin1').strip().split('\t')[-1].split(' '))
+
 word_to_id_map.update(list( zip(words,list(range(3,len(words)+3))) ))
 
 for word, word_id in word_to_id_map.items():
