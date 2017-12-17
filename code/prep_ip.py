@@ -53,10 +53,12 @@ def preprocess_file(f, embeddings_model, embeddings_size, max_sent_size):
     """
     with open(f,'rb') as f:
         test_lines = [i.decode().strip().split('\t') for i in f.readlines()]
+    print(f,'read...')
     test_lines = np.array([i for i in test_lines if len(i)==13],dtype=np.object)
     for i in [3,4,8,9]:
         test_lines[:,i] = test_lines[:,i].astype(np.int)
     test_lines = test_lines[:,[0,2,3,4,5,7,8,9,12]]
+    print('Test lines made...')
     
     sent_idx = 8
     e1_start_idx = 2
@@ -66,6 +68,8 @@ def preprocess_file(f, embeddings_model, embeddings_size, max_sent_size):
     emb = np.array([create_sent_embeddings(i) for i in test_lines])
     seq_lens = np.reshape(np.array([len(i.split(' ')) for i in test_lines[:,8]]),[-1,1])
     
+    print('Embeddings and IDs made...')
+
     return test_lines[:,[0,4]],emb,seq_lens
 
 def create_entity_pairs_vocab(preprocessed_sents, e1_idx=0, e2_idx=4):
@@ -119,11 +123,11 @@ def create_sentences_tuples(entity_pairs_index, sents_embeddings, seq_lens, rela
         if pos_idx.shape[0]==0:
             continue
 
-        # make positive sample indexes
+        # make positive samples
         if pos_idx.shape[0]>max_pos_sample_size:
             pos_idx = np.random.choice(pos_idx,max_pos_sample_size,replace=False)
-        sent_1_idx = []
-        sent_2_idx = []
+        sent_1_idx = [] # indexes of sentences where entity 1 is present
+        sent_2_idx = [] # indexes of sentences where entity 1 is present
         for i in range(len(pos_idx)):
             for j in range(i+1,len(pos_idx)):
                 sent_1_idx.append(pos_idx[i])
@@ -141,7 +145,7 @@ def create_sentences_tuples(entity_pairs_index, sents_embeddings, seq_lens, rela
         flag_1 = np.array([True for i in range(len(sent_2))])
         rel_2 = np.zeros(shape=(len(sent_2),))
 
-        #make negative samples indexes for sentences
+        #make negative samples for sentences
         sent_3_idx = [i for i in all_idxs if i not in pos_idx]
         sent_3_idx = np.random.choice(sent_3_idx,neg_sample_size_sent)
         sent_3_idx = np.repeat(sent_3_idx,pos_samples_len)
@@ -149,7 +153,7 @@ def create_sentences_tuples(entity_pairs_index, sents_embeddings, seq_lens, rela
         seq_3 = seq_lens[sent_3_idx]
         rel_3 = np.zeros(shape=(neg_sample_size_sent,))
 
-        #make negative samples indexes for relations
+        #make negative samples for relations
         rel_3_idx = [i for i in all_idxs if i not in pos_rel_idx]
         rel_3_idx = np.random.choice(rel_3_idx,neg_sample_size_rel)
         rel_3 = np.concatenate([rel_3,relations[rel_3_idx]])
