@@ -66,11 +66,11 @@ class RowlessModel(object):
     def create_placeholders_lstm(self):
         # shape (batch_size, timesteps, wordvec_dim)
         self.input_LSTM_1 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s1")
-        self.seq_len_LSTM_1 = tf.placeholder(tf.uint8, [None])
+        self.seq_len_LSTM_1 = tf.placeholder(tf.uint8, [None,])
         self.input_LSTM_2 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s2")
-        self.seq_len_LSTM_2 = tf.placeholder(tf.uint8, [None])
+        self.seq_len_LSTM_2 = tf.placeholder(tf.uint8, [None,])
         self.input_LSTM_3 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s3")
-        self.seq_len_LSTM_3 = tf.placeholder(tf.uint8, [None])
+        self.seq_len_LSTM_3 = tf.placeholder(tf.uint8, [None,])
 
     # Placeholders for relation as input data
     def create_placeholders_kb(self):
