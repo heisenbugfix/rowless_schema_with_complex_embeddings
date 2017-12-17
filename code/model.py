@@ -39,7 +39,7 @@ class RowlessModel(object):
         self.rel_embeddings = tf.get_variable("relation_embeddings",
                                               [self.num_relations, self.embedding_size], dtype=tf.float32)
         emb_rel_ids = tf.nn.embedding_lookup(self.rel_embeddings, rel_ids)
-        emb_rel_ids = tf.reshape(emb_rel_ids, shape=[-1, emb_rel_ids.shape[2]])
+        # emb_rel_ids = tf.reshape(emb_rel_ids, shape=[-1, emb_rel_ids.shape[2]])
         return emb_rel_ids
 
     # Creating conditional placeholders for switching inputs between LSTM and KB Embeddings
@@ -74,8 +74,8 @@ class RowlessModel(object):
 
     # Placeholders for relation as input data
     def create_placeholders_kb(self):
-        self.input_2_r2 = tf.placeholder(tf.int32, [None, 1], name="r2")
-        self.input_3_r3 = tf.placeholder(tf.int32, [None, 1], name="r3")
+        self.input_2_r2 = tf.placeholder(tf.int32, [None, ], name="r2")
+        self.input_3_r3 = tf.placeholder(tf.int32, [None, ], name="r3")
 
     # create a shared rnn layer
     def lstm_share(self, num_units, input, seq_len):
