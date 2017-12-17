@@ -66,7 +66,7 @@ def preprocess_file(f, embeddings_model, embeddings_size, max_sent_size):
     e2_start_idx = 6
     e2_end_idx = 7
     emb = np.array([create_sent_embeddings(i) for i in test_lines])
-    seq_lens = np.reshape(np.array([len(i.split(' ')) for i in test_lines[:,8]]),[-1,1])
+    seq_lens = np.reshape(np.array([len(i.split(' ')) for i in test_lines[:,8]],dtype=np.uint8),[-1,1])
     
     print('Embeddings and IDs made...')
 
