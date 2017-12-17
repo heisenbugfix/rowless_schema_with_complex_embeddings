@@ -93,7 +93,7 @@ print('Entity pairs, Sentence embeddings, Sequence lengths loaded')
 
 
 pairs_index = create_entity_pairs_index(ids,relations[:,[0,1]])
-results = create_sentences_tuples(pairs_index,emb,seq_lens,np.array(relations[:,2],dtype=np.int32),max_pos_sample_size,neg_sample_size_sent, neg_sample_size_rel)
+results = create_tuples(pairs_index,emb,seq_lens,np.array(relations[:,2],dtype=np.int32),max_pos_sample_size,neg_sample_size_sent, neg_sample_size_rel)
 
 print([i.shape for i in results])
 

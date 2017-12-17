@@ -188,6 +188,9 @@ def create_tuples(entity_pairs_index, sents_embeddings, seq_lens, relations, max
         pickle.dump(results,f,protocol=2)
     
     print('Indices done')
+
+    sents_embeddings = np.append(sents_embeddings,np.zeros(shape=[sents_embeddings.shape[1]]))
+    relations = np.append(relations,[0])
     
     sent_1 = sents_embeddings[sent_1_idx]
     print('Sent 1 done')
