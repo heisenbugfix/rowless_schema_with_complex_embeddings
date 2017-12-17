@@ -118,6 +118,7 @@ def create_sentences_tuples(entity_pairs_index, sents_embeddings, seq_lens, rela
         return np.concatenate([np.repeat(i,rep) for i in a])
 
     all_idxs = np.arange(len(sents_embeddings))
+    all_idxs_rels = np.arange(len(relations))
     for ent_pair, values in entity_pairs_index.items():
         disp_step += 1
         if(disp_step%1000)==0:
@@ -160,7 +161,7 @@ def create_sentences_tuples(entity_pairs_index, sents_embeddings, seq_lens, rela
         rel_3 = np.zeros(shape=(neg_sample_size_sent,),dtype=np.int32)
 
         #make negative samples for relations
-        rel_3_idx = [i for i in all_idxs if i not in pos_rel_idx]
+        rel_3_idx = [i for i in all_idxs_rels if i not in pos_rel_idx]
         rel_3_idx = np.random.choice(rel_3_idx,neg_sample_size_rel)
         rel_3 = np.concatenate([rel_3,relations[rel_3_idx]])
         sent_3 = np.concatenate([sent_3,np.zeros(shape=(neg_sample_size_rel,sent_3.shape[1]),dtype=np.int32)])
