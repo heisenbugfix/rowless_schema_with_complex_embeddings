@@ -58,7 +58,7 @@ relations[:,2] = np.array([int(relations_dict[i]) for i in relations[:,2]])
 
 
 print('Starting preprocessing...')
-ids,emb,seq_lens = preprocess_file(org_data_path+'kb_train_65',embeddings_model,embeddings_size,max_sent_size)
+ids,emb,seq_lens = preprocess_file(org_data_path+'kb_train_65',embeddings_model,max_sent_size)
 print(ids.shape,emb.shape,seq_lens.shape)
 
 with open(org_data_path+'intermediate/ids.pickle','wb') as f:
