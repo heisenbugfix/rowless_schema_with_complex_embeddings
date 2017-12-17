@@ -21,20 +21,23 @@ word_to_id_map = dict()
 id_to_emb_map = dict()
 
 word_to_id_map[''] = 0
-id_to_emb_map[0] = [0]*embeddings_size
-id_to_emb_map[1] = list(np.append(np.zeros(int(embeddings_size/2)),np.ones(embeddings_size-(int(embeddings_size/2)))))
-id_to_emb_map[2] = list(np.append(np.ones(int(embeddings_size/2)),np.zeros(embeddings_size-(int(embeddings_size/2)))))
 
 words = embeddings_model.words
 word_to_id_map.update(list( zip(words,list(range(3,len(words)+3))) ))
 
 for word, word_id in word_to_id_map.items():
 	id_to_emb_map[word_id] = embeddings_model[word]
+id_to_emb_map[0] = [0]*embeddings_size
+id_to_emb_map[1] = list(np.append(np.zeros(int(embeddings_size/2)),np.ones(embeddings_size-(int(embeddings_size/2)))))
+id_to_emb_map[2] = list(np.append(np.ones(int(embeddings_size/2)),np.zeros(embeddings_size-(int(embeddings_size/2)))))
+
+a = [[key,value] for key,value in id_to_emb_map.items()]
+id_to_emb_map_np = np.array([i[1] for i in a])
 
 with open(data_path+'temp/word_to_id_map.pickle','wb') as f:
     pickle.dump(word_to_id_map,f,protocol=2)
 with open(data_path+'temp/id_to_emb_map.pickle','wb') as f:
-    pickle.dump(id_to_emb_map,f,protocol=2)
+    pickle.dump(id_to_emb_map_np,f,protocol=2)
 
 print('Embeddings loaded and embeddings maps created and saved...')
 
