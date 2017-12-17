@@ -4,11 +4,11 @@ import tensorflow as tf
 # TODO: Make model more generic. Need to abstractions
 class RowlessModel(object):
     # Create input placeholder for the network
-    def __init__(self, wordvecdim, num_units, vocab_size=None, embedding_size=None, emb_type="real"):
+    def __init__(self, wordvecdim, num_units, num_relations=None, embedding_size=None, emb_type="real"):
 
         assert embedding_size == num_units
-        assert vocab_size is not None
-        self.vocab_size = vocab_size
+        assert num_relations is not None
+        self.num_relations = num_relations
         if embedding_size is None:
             self.embedding_size = 50
         else:
@@ -37,15 +37,15 @@ class RowlessModel(object):
     # Create KB embeddings
     def create_kb_embeddings(self, rel_ids):
         self.rel_embeddings = tf.get_variable("relation_embeddings",
-                                              [self.vocab_size, self.embedding_size], dtype=tf.float32)
+                                              [self.num_relations, self.embedding_size], dtype=tf.float32)
         emb_rel_ids = tf.nn.embedding_lookup(self.rel_embeddings, rel_ids)
         emb_rel_ids = tf.reshape(emb_rel_ids, shape=[-1, emb_rel_ids.shape[2]])
         return emb_rel_ids
 
     # Creating conditional placeholders for switching inputs between LSTM and KB Embeddings
     def create_conditional_placeholders(self):
-        self.use_LSTM_2 = tf.placeholder(tf.bool)
-        self.use_LSTM_3 = tf.placeholder(tf.bool)
+        self.use_LSTM_2 = tf.placeholder(tf.bool, shape=[None,])
+        self.use_LSTM_3 = tf.placeholder(tf.bool, shape=[None,])
 
     # generate the outputs for each input
     def create_lstm_outputs(self):
@@ -130,3 +130,4 @@ class RowlessModel(object):
     def training(self):
         global_step_1 = tf.Variable(0, trainable=False, name='global_step_1')
         self.train_opt = tf.train.AdamOptimizer().minimize(self.loss, global_step=global_step_1)
+        self.saver = tf.train.Saver()
