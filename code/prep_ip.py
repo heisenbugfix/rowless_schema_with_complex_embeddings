@@ -148,7 +148,6 @@ def create_sentences_tuples(entity_pairs_index, sents_embeddings, seq_lens, rela
         sent_3 = sents_embeddings[sent_3_idx]
         seq_3 = seq_lens[sent_3_idx]
         rel_3 = np.zeros(shape=(neg_sample_size_sent,))
-        
 
         #make negative samples indexes for relations
         rel_3_idx = [i for i in all_idxs if i not in pos_rel_idx]
