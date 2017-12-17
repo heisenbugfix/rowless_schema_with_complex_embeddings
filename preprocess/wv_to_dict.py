@@ -17,6 +17,7 @@ max_sent_size = 35
 
 embeddings_model = fasttext.load_model(data_path+'temp/embeddings_model.bin')
 
+"""
 word_to_id_map = dict()
 id_to_emb_map = dict()
 
@@ -46,17 +47,17 @@ with open(data_path+'temp/word_to_id_map.pickle','wb') as f:
     pickle.dump(word_to_id_map,f,protocol=2)
 with open(data_path+'temp/id_to_emb_map.pickle','wb') as f:
     pickle.dump(id_to_emb_map_np,f,protocol=2)
+"""
 
+with open(data_path+'temp/word_to_id_map.pickle','rb') as f:
+    word_to_id_map = pickle.load(f,protocol=2)
+with open(data_path+'temp/id_to_emb_map.pickle','rb') as f:
+    id_to_emb_map_np = pickle.load(f,protocol=2)
 print('Embeddings loaded and embeddings maps created and saved...')
-
 embeddings_model = word_to_id_map
-
-
-
 
 with open(org_data_path+'relations_dict.pickle','rb') as f:
     relations_dict = pickle.load(f)
-
 print('Read relations dict')
 
 with open(org_data_path+'train.txt') as f:
@@ -64,7 +65,7 @@ with open(org_data_path+'train.txt') as f:
 relations[:,2] = np.array([int(relations_dict[i]) for i in relations[:,2]])
 
 
-
+"""
 print('Starting preprocessing...')
 ids,emb,seq_lens = preprocess_file(org_data_path+'kb_train_35_cap10',embeddings_model,max_sent_size)
 print(ids.shape,emb.shape,seq_lens.shape)
@@ -80,8 +81,15 @@ except:
 		json.dump(emb.tolist(),f)
 with open(org_data_path+'intermediate/se_lens.pickle','wb') as f:
     pickle.dump(seq_lens,f,protocol=2)
-print('Done and saved preprocessing...')
-
+print('Entity pairs, Sentence embeddings, Sequence lengths pickled')
+"""
+with open(org_data_path+'intermediate/ids.pickle','rb') as f:
+	ids = pickle.load(f,protocol=2)
+with open(org_data_path+'intermediate/emb.pickle','rb') as f:
+	emb = pickle.load(f,protocol=2)
+with open(org_data_path+'intermediate/seq_lens.pickle','rb') as f:
+	seq_lens = pickle.load(f,protocol=2)
+print('Entity pairs, Sentence embeddings, Sequence lengths loaded')
 
 
 pairs_index = create_entity_pairs_index(ids,relations[:,[0,1]])
@@ -91,7 +99,6 @@ print([i.shape for i in results])
 
 try:
 	with open(data_path+'temp/preprocessed_train.pickle','wb') as f:
-		a = 0/0
 		pickle.dump(results,f,protocol=2)
 except:
 	with open(data_path+'temp/preprocessed_train.json','w') as f:

@@ -3,6 +3,9 @@ import pandas as pd
 import re
 import gc
 
+org_data_path = '/iesl/canvas/aranjan/rowless/all_data/kb_eps_only/'
+data_path = '/iesl/canvas/aranjan/rowless/'
+
 def get_e1_embedding_id():
     return 1
 
@@ -90,108 +93,130 @@ def create_entity_pairs_index(entity_pairs_sents,entity_pairs_rels):
         if key in d:
             d[key] = (np.append(d[key][0],idx),d[key][1])
         else:
-            d[key] = (np.array([idx]),np.array([],dtype=np.int32))
+            d[key] = (np.array([idx],dtype=np.int32),np.array([],dtype=np.int32))
     for idx,ep in enumerate(entity_pairs_rels):
         key = (ep[0],ep[1])
         if key in d:
             d[key] = (d[key][0],np.append(d[key][1],idx))
         else:
-            d[key] = (np.array([]),np.array([idx],dtype=np.int32))
+            d[key] = (np.array([],dtype=np.int32),np.array([idx],dtype=np.int32))
     return d
 
-def create_sentences_tuples(entity_pairs_index, sents_embeddings, seq_lens, relations, max_pos_sample_size, neg_sample_size_sent, neg_sample_size_rel):
-    ret_f1 = None
-    ret_f2 = None
-    ret_sent_1  = None
-    ret_seq_1 = None
-    ret_sent_2 = None
-    ret_seq_2 = None
-    ret_sent_3 = None
-    ret_seq_3 = None
-    ret_rel_2 = None
-    ret_rel_3 = None
-    
-    disp_step = -1
+
+def create_sentences_indexes(entity_pairs_index, max_sent_idx, max_rel_idx, max_pos_sample_size, neg_sample_size_sent, neg_sample_size_rel, spl_sent_idx, spl_rel_idx):
+    disp_step = 0
     loop_flag = True
+    
+    flag_2_block_count = 0
 
     def repeat_each(a,rep):
         return np.concatenate([np.repeat(i,rep) for i in a])
 
-    all_idxs = np.arange(len(sents_embeddings))
-    all_idxs_rels = np.arange(len(relations))
+    all_idxs = np.arange(max_sent_idx)
+    all_idxs_rels = np.arange(max_rel_idx)
+
     for ent_pair, values in entity_pairs_index.items():
         disp_step += 1
-        if(disp_step%1000)==0:
+        if(disp_step%50)==0:
             print('On iterable',disp_step)
-            pass
+            if(disp_step%1000)==0:
+                with open(org_data_path+'intermediate/train_indexes.pickle','wb') as f:
+                    results = [ret_sent_1_idx, ret_sent_2_idx, ret_sent_3_idx, ret_rel_2_idx, ret_rel_3_idx]
+                    pickle.dump(results,f,protocol=2)
+                gc.collect()
+
         pos_idx, pos_rel_idx = values[0], values[1]
 
         if pos_idx.shape[0]==0:
             continue
         
         # make positive samples
-        if pos_idx.shape[0]>max_pos_sample_size:
-            pos_idx = np.random.choice(pos_idx,max_pos_sample_size,replace=False)
-        sent_1_idx = [] # indexes of sentences where entity 1 is present
-        sent_2_idx = [] # indexes of sentences where entity 2 is present
-        for i in range(len(pos_idx)):
-            for j in range(i+1,len(pos_idx)):
-                sent_1_idx.append(pos_idx[i])
-                sent_2_idx.append(pos_idx[j])
         if pos_idx.shape[0]==1:
             sent_1_idx = [pos_idx[0]]
             sent_2_idx = [pos_idx[0]]
+        else:
+            if pos_idx.shape[0]>max_pos_sample_size:
+                pos_idx = np.random.choice(pos_idx,max_pos_sample_size,replace=False)
+            sent_1_idx = [] # indexes of sentences where entity 1 is present
+            sent_2_idx = [] # indexes of sentences where entity 2 is present
+            for i in range(len(pos_idx)):
+                for j in range(i+1,len(pos_idx)):
+                    sent_1_idx.append(pos_idx[i])
+                    sent_2_idx.append(pos_idx[j])
+        
         pos_samples_len = len(sent_1_idx)
+
         sent_1_idx = np.concatenate([repeat_each(sent_1_idx,neg_sample_size_sent),repeat_each(sent_1_idx,neg_sample_size_rel)])
         sent_2_idx = np.concatenate([repeat_each(sent_2_idx,neg_sample_size_sent),repeat_each(sent_2_idx,neg_sample_size_rel)])
         
-        sent_1 = sents_embeddings[sent_1_idx]
-        sent_2 = sents_embeddings[sent_2_idx]
-        seq_1 = seq_lens[sent_1_idx]
-        seq_2 = seq_lens[sent_2_idx]
-        flag_1 = np.array([True for i in range(len(sent_2))])
-        rel_2 = np.zeros(shape=(len(sent_2),),dtype=np.int32)
-
         #make negative samples for sentences
         sent_3_idx = [i for i in all_idxs if i not in pos_idx]
         sent_3_idx = np.random.choice(sent_3_idx,neg_sample_size_sent)
         sent_3_idx = np.repeat(sent_3_idx,pos_samples_len)
-        sent_3 = sents_embeddings[sent_3_idx]
-        seq_3 = seq_lens[sent_3_idx]
-        rel_3 = np.zeros(shape=(neg_sample_size_sent,),dtype=np.int32)
+        sent_3_idx = np.concatenate([sent_3_idx,np.full([neg_sample_size_rel,],spl_sent_idx,dtype=np.int32)])
 
         #make negative samples for relations
         rel_3_idx = [i for i in all_idxs_rels if i not in pos_rel_idx]
         rel_3_idx = np.random.choice(rel_3_idx,neg_sample_size_rel)
-        rel_3 = np.concatenate([rel_3,relations[rel_3_idx]])
-        sent_3 = np.concatenate([sent_3,np.zeros(shape=(neg_sample_size_rel,sent_3.shape[1]),dtype=np.int32)])
-        seq_3 = np.concatenate([seq_3,np.zeros(shape=(neg_sample_size_rel,),dtype=np.uint8)])
+        rel_3_idx = np.concatenate([np.full([neg_sample_size_sent,],spl_rel_idx,dtype=np.int32),rel_3_idx])
 
-        flag_2 = np.concatenate([[True for i in range(neg_sample_size_sent)],[False for i in range(neg_sample_size_rel)]])
+        flag_2_block_count += 1
 
         if loop_flag:
             loop_flag = False
-            ret_f1 = flag_1 
-            ret_f2 = flag_2 
-            ret_sent_1 = sent_1
-            ret_seq_1 = seq_1 
-            ret_sent_2 = sent_2
-            ret_seq_2 = seq_2 
-            ret_sent_3 = sent_3
-            ret_seq_3 = seq_3
-            ret_rel_2 = rel_2
-            ret_rel_3 = rel_3
+            ret_sent_1_idx = sent_1_idx
+            ret_sent_2_idx = sent_2_idx
+            ret_sent_3_idx = sent_3_idx
+            ret_rel_2_idx = rel_2_idx
+            ret_rel_3_idx = rel_3_idx
         else:
-            ret_f1 = np.concatenate([ret_f1,flag_1])
-            ret_f2 = np.concatenate([ret_f2,flag_2])
-            ret_sent_1 = np.concatenate([ret_sent_1,sent_1])
-            ret_seq_1 = np.concatenate([ret_seq_1,seq_1])
-            ret_sent_2 = np.concatenate([ret_sent_2,sent_2])
-            ret_seq_2 = np.concatenate([ret_seq_2,seq_2])
-            ret_sent_3 = np.concatenate([ret_sent_3,sent_3])
-            ret_seq_3 = np.concatenate([ret_seq_3,seq_3])
-            ret_rel_2 = np.concatenate([ret_rel_2,rel_2])
-            ret_rel_3 = np.concatenate([ret_rel_3,rel_3])
+            ret_sent_1_idx = np.concatenate([ret_sent_1_idx,sent_1_idx])
+            ret_sent_2_idx = np.concatenate([ret_sent_2_idx,sent_2_idx])
+            ret_sent_3_idx = np.concatenate([ret_sent_3_idx,sent_3_idx])
+            ret_rel_2_idx = np.concatenate([ret_rel_2_idx,rel_2_idx])
+            ret_rel_3_idx = np.concatenate([ret_rel_3_idx,rel_3_idx])
 
-        gc.collect()
-    return ret_f1, ret_f2, ret_sent_1, ret_seq_1, ret_sent_2, ret_seq_2, ret_sent_3, ret_seq_3, ret_rel_2, ret_rel_3
+    return ret_sent_1_idx, ret_sent_2_idx, ret_sent_3_idx, ret_rel_2_idx, ret_rel_3_idx, flag_2_block_count
+
+def create_tuples(entity_pairs_index, sents_embeddings, seq_lens, relations, max_pos_sample_size, neg_sample_size_sent, neg_sample_size_rel):
+    sent_1_idx, sent_2_idx, sent_3_idx, rel_2_idx, rel_3_idx, flag_2_block_count\
+    = create_sentences_indexes(entity_pairs_index, len(sents_embeddings), len(relations),\
+        max_pos_sample_size, neg_sample_size_sent, neg_sample_size_rel, len(sents_embeddings)+1, spl_sent_idx, len(relations)+1)
+
+    with open(org_data_path+'intermediate/train_indexes.pickle','wb') as f:
+        results = [ret_sent_1_idx, ret_sent_2_idx, ret_sent_3_idx, ret_rel_2_idx, ret_rel_3_idx]
+        pickle.dump(results,f,protocol=2)
+    
+    print('Indices done')
+    
+    sent_1 = sents_embeddings[sent_1_idx]
+    print('Sent 1 done')
+    
+    sent_2 = sents_embeddings[sent_2_idx]
+    print('Sent 2 done')
+    
+    seq_1 = seq_lens[sent_1_idx]
+    print('Seq 1 done')
+    
+    seq_2 = seq_lens[sent_2_idx]
+    print('Seq 2 done')
+    
+    rel_2 = np.zeros(shape=(len(sent_2),),dtype=np.int32)
+    print('Rel 2 done')
+    
+    sent_3 = sents_embeddings[sent_3_idx]
+    print('Sent 3 done')
+    
+    seq_3 = seq_lens[sent_3_idx]
+    print('Seq 3 done')
+    
+    rel_3 = relations[rel_3_idx]
+    print('Rel 3 done')
+    
+    flag_1 = np.array([True for i in range(len(sent_2))])
+    print('Flag 1 done')
+    
+    flag_2 = np.repeat(np.concatenate([[True for i in range(neg_sample_size_sent)],[False for i in range(neg_sample_size_rel)]]),flag_2_block_count)
+    print('Flag 2 done')
+
+    return flag_1, flag_2, sent_1, seq_1, sent_2, seq_2, sent_3, seq_3, rel_2, rel_3
