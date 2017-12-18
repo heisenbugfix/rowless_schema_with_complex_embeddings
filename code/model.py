@@ -59,11 +59,11 @@ class RowlessModel(object):
     # generates the outputs for each input
     def create_lstm_outputs(self):
         with tf.variable_scope('shared_lstm') as scope:
-            self.out_lstm_1 = self.lstm_share(self.num_units, self.out_s1_wv, self.seq_len_LSTM_1)
+            self.out_lstm_1 = self.lstm_share(self.num_units, self.out_s1_wv, self.seq_len_LSTM_1, False)
             scope.reuse_variables()  # the variables will be reused.
-            self.out_lstm_2 = self.lstm_share(self.num_units, self.out_s2_wv, self.seq_len_LSTM_2)
+            self.out_lstm_2 = self.lstm_share(self.num_units, self.out_s2_wv, self.seq_len_LSTM_2, True)
             scope.reuse_variables()
-            self.out_lstm_3 = self.lstm_share(self.num_units, self.out_s3_wv, self.seq_len_LSTM_3)
+            self.out_lstm_3 = self.lstm_share(self.num_units, self.out_s3_wv, self.seq_len_LSTM_3, True)
 
     def create_kb_outputs(self):
         with tf.variable_scope('shared_kb') as scope:
@@ -114,8 +114,9 @@ class RowlessModel(object):
         self.input_3_r3 = tf.placeholder(tf.int32, [None, ], name="r3")
 
     # create a shared rnn layer
-    def lstm_share(self, num_units, input, seq_len):
-        lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(num_units=num_units, state_is_tuple=True)
+    #def lstm_share(self, num_units, input, seq_len):
+    def lstm_share(self, num_units, input, seq_len, isReuse):
+        lstm_cell = tf.contrib.rnn.BasicLSTMCell(num_units=num_units, state_is_tuple=True,reuse=isReuse)
         outputs, _ = tf.nn.dynamic_rnn(cell=lstm_cell,
                                        inputs=input,
                                        sequence_length=seq_len,
@@ -168,7 +169,7 @@ class RowlessModel(object):
                            tf.reduce_sum(tf.multiply(self.out_1, self.out_3), axis=1, keep_dims=True))))
         elif self.emb_type == "complex":
             r1_r2 = tf.reduce_sum(self.out_1_real * self.out_2_real, axis=1) + \
-                        tf.reduce_sum(self.out_1_im * self.out_1_im, axis=1)
+                        tf.reduce_sum(self.out_1_im * self.out_2_im, axis=1)
             r1_r3 = tf.reduce_sum(self.out_1_real * self.out_3_real, axis=1) + \
                         tf.reduce_sum(self.out_1_im * self.out_3_im, axis=1)
             self.loss = tf.reduce_mean(-tf.log(tf.sigmoid(r1_r2 - r1_r3)))
@@ -178,13 +179,14 @@ class RowlessModel(object):
         self.train_opt = tf.train.AdamOptimizer().minimize(self.loss, global_step=global_step_1)
         self.saver = tf.train.Saver()
 
-# c = wordvecdim = 50
-# num_units = 50
-# num_relations = 237
-# vocab_size = 125
-# model = RowlessModel(vocab_size=vocab_size,
-#                      wordvecdim=wordvecdim,
-#                      num_units=num_units,
-#                      num_relations=num_relations,
-#                      embedding_size=num_units,
-#                      emb_type='complex')
+#c = wordvecdim = 50
+#num_units = 50
+#num_relations = 237
+#vocab_size = 125
+#model = RowlessModel(vocab_size=vocab_size,
+#                     wordvecdim=wordvecdim,
+#                     num_units=num_units,
+#                     num_relations=num_relations,
+#                     embedding_size=num_units,
+#                     emb_type='complex')
+#print("OK")
