@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 import pickle as pkl
-from code_package.model import RowlessModel
+from code.model import RowlessModel
 
 train_data = pkl.load(open("../data/preprocessed_train.pickle",'rb'))
 word_vec = pkl.load(open("../data/id_to_emb_map.pickle",'rb'))
