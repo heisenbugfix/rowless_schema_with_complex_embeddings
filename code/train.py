@@ -1,11 +1,24 @@
 from __future__ import division
+import sys
+sys.path.insert(0,"./code")
 import numpy as np
 import pickle as pkl
-from code.model import RowlessModel
+from model import RowlessModel
 
-train_data = pkl.load(open("../data/preprocessed_train.pickle",'rb'))
+train_type = 'real'
+train_data = list(pkl.load(open("../data/preprocessed_train.pickle",'rb')))
 word_vec = pkl.load(open("../data/id_to_emb_map.pickle",'rb'))
-modelsave_path = "../data/rowless_saved_model.ckpt"
+if train_type =='real':
+    modelsave_path = "../data/rowless_saved_model_real.ckpt"
+else:
+    modelsave_path = "../data/rowless_saved_model_complex.ckpt"
+
+# Shuffling the data
+rng_state = np.random.get_state()
+for i, _ in enumerate(train_data):
+    np.random.set_state(rng_state)
+    np.random.shuffle(train_data[i])
+
 wordvecdim = 50
 num_units = 50
 num_relations = 237
@@ -15,13 +28,13 @@ model = RowlessModel(vocab_size=vocab_size,
                      num_units=num_units,
                      num_relations=num_relations,
                      embedding_size=num_units,
-                     emb_type='complex')
+                     emb_type=train_type)
 
 #LOAD WORD EMBEDDING IN MODEL
 model.sess.run(model.word_emb_init, feed_dict={model.word_emb_placeholder: word_vec})
 
 data_len = len(train_data[0])
-batch_size = 2000
+batch_size = 6000
 num_batches = int(data_len / batch_size + 0.5)
 num_epochs = 3000
 best_cost = 9999999999999999999.0
@@ -48,13 +61,14 @@ for epoch in range(num_epochs):
                                          model.input_2_r2    : train_data[8][indx_l: indx_r],
                                          model.input_3_r3    : train_data[9][indx_l: indx_r]
                                         })
-        print(c)
+        # print(c)
         epoch_cost += c
     epoch_cost = epoch_cost/(num_batches)
     print("EPOCH:%d     LOSS:%f"%(epoch, epoch_cost))
-    if(epoch_cost < best_cost):
-        best_cost = epoch_cost
-        #Save the model parameters
-        model.saver.save(model.sess, save_path=modelsave_path)
+    if epoch%50==0 or epoch == num_epochs-1:
+        if(epoch_cost < best_cost):
+            best_cost = epoch_cost
+            #Save the model parameters
+            model.saver.save(model.sess, save_path=modelsave_path)
 
 
