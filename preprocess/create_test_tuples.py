@@ -71,4 +71,4 @@ try:
 except:
 	with open(data_path+'temp/preprocessed_test.json','w') as f:
 		print('JSONing results')
-		json.dump([i.tolist() for i in results],f)
+		json.dump([i.tolist() for i in tuples],f)
