@@ -133,7 +133,7 @@ def create_test_tuples(ent_pair_idx_sent, ent_pair_idx_rel, sents_embeddings, se
 	tuples = []
 	disp_step = -1
 
-	all_idxs_rels = np.arange(max_sent_idx)
+	all_idxs_rels = np.arange(len(relations))
 
 	for ep in ent_pair_idx_sent.keys():
 		disp_step += 1
