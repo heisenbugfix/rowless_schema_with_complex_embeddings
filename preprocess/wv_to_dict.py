@@ -54,8 +54,8 @@ with open(data_path+'temp/word_to_id_map.pickle','rb') as f:
     word_to_id_map = pickle.load(f)
 with open(data_path+'temp/id_to_emb_map.pickle','rb') as f:
     id_to_emb_map_np = pickle.load(f)
-print('Embeddings loaded and embeddings maps created and saved...')
 embeddings_model = word_to_id_map
+print('Embeddings loaded and embeddings maps created and saved...')
 
 with open(org_data_path+'relations_dict.pickle','rb') as f:
     relations_dict = pickle.load(f)
