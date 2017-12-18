@@ -102,11 +102,11 @@ class RowlessModel(object):
     def create_placeholders_lstm(self):
         # shape (batch_size, timesteps, wordvec_dim)
         # self.input_LSTM_1 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s1")
-        self.seq_len_LSTM_1 = tf.placeholder(tf.uint8, [None,])
+        self.seq_len_LSTM_1 = tf.placeholder(tf.int32, [None,])
         # self.input_LSTM_2 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s2")
-        self.seq_len_LSTM_2 = tf.placeholder(tf.uint8, [None,])
+        self.seq_len_LSTM_2 = tf.placeholder(tf.int32, [None,])
         # self.input_LSTM_3 = tf.placeholder(tf.float32, [None, None, self.wordvec_dim], name="s3")
-        self.seq_len_LSTM_3 = tf.placeholder(tf.uint8, [None,])
+        self.seq_len_LSTM_3 = tf.placeholder(tf.int32, [None,])
 
     # Placeholders for relation as input data
     def create_placeholders_kb(self):
@@ -122,8 +122,18 @@ class RowlessModel(object):
                                        dtype=tf.float32,
                                        time_major=False
                                        )
+        rel = self.last_relevant(outputs, seq_len)
+        return rel
 
-        return outputs[:, -1]
+    def last_relevant(self, output, length):
+        batch_size = tf.shape(output)[0]
+        max_length = tf.shape(output)[1]
+        out_size = int(output.get_shape()[2])
+        index = tf.range(0, batch_size) * max_length + (length - 1)
+        flat = tf.reshape(output, [-1, out_size])
+        relevant = tf.gather(flat, index)
+        return relevant
+
 
     # Creating embedding for complex layers
     def create_complex_embeddings(self, input_dat, name):
@@ -167,3 +177,14 @@ class RowlessModel(object):
         global_step_1 = tf.Variable(0, trainable=False, name='global_step_1')
         self.train_opt = tf.train.AdamOptimizer().minimize(self.loss, global_step=global_step_1)
         self.saver = tf.train.Saver()
+
+# c = wordvecdim = 50
+# num_units = 50
+# num_relations = 237
+# vocab_size = 125
+# model = RowlessModel(vocab_size=vocab_size,
+#                      wordvecdim=wordvecdim,
+#                      num_units=num_units,
+#                      num_relations=num_relations,
+#                      embedding_size=num_units,
+#                      emb_type='complex')
