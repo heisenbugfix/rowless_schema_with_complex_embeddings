@@ -16,3 +16,5 @@ id_to_emb_map[2] = list(np.append(np.ones(int(embeddings_size/2)),np.zeros(embed
 id_to_emb_map_np = np.zeros(shape=[len(word_to_id_map)+2,embeddings_size])
 for key,value in id_to_emb_map.items():
     id_to_emb_map_np[key] = value
+with open(data_path+'temp/id_to_emb_map.pickle','wb') as f:
+    pickle.dump(id_to_emb_map_np,f,protocol=2)
