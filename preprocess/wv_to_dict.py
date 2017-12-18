@@ -10,14 +10,15 @@ org_data_path = '/iesl/canvas/aranjan/rowless/all_data/kb_eps_only/'
 data_path = '/iesl/canvas/aranjan/rowless/'
 
 max_pos_sample_size = 10
-neg_sample_size_sent = 25
-neg_sample_size_rel = 25
+neg_sample_size_sent = 10
+neg_sample_size_rel = 10
 embeddings_size = 50
 max_sent_size = 35
 
+"""
 embeddings_model = fasttext.load_model(data_path+'temp/embeddings_model.bin')
 
-"""
+
 word_to_id_map = dict()
 id_to_emb_map = dict()
 
@@ -50,9 +51,9 @@ with open(data_path+'temp/id_to_emb_map.pickle','wb') as f:
 """
 
 with open(data_path+'temp/word_to_id_map.pickle','rb') as f:
-    word_to_id_map = pickle.load(f,protocol=2)
+    word_to_id_map = pickle.load(f)
 with open(data_path+'temp/id_to_emb_map.pickle','rb') as f:
-    id_to_emb_map_np = pickle.load(f,protocol=2)
+    id_to_emb_map_np = pickle.load(f)
 print('Embeddings loaded and embeddings maps created and saved...')
 embeddings_model = word_to_id_map
 
@@ -84,11 +85,11 @@ with open(org_data_path+'intermediate/se_lens.pickle','wb') as f:
 print('Entity pairs, Sentence embeddings, Sequence lengths pickled')
 """
 with open(org_data_path+'intermediate/ids.pickle','rb') as f:
-	ids = pickle.load(f,protocol=2)
+	ids = pickle.load(f)
 with open(org_data_path+'intermediate/emb.pickle','rb') as f:
-	emb = pickle.load(f,protocol=2)
-with open(org_data_path+'intermediate/seq_lens.pickle','rb') as f:
-	seq_lens = pickle.load(f,protocol=2)
+	emb = pickle.load(f)
+with open(org_data_path+'intermediate/se_lens.pickle','rb') as f:
+	seq_lens = pickle.load(f)
 print('Entity pairs, Sentence embeddings, Sequence lengths loaded')
 
 
