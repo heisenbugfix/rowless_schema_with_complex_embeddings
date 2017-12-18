@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import re
 import gc
+import pickle
 
 org_data_path = '/iesl/canvas/aranjan/rowless/all_data/kb_eps_only/'
 data_path = '/iesl/canvas/aranjan/rowless/'
@@ -106,7 +107,7 @@ def create_entity_pairs_index(entity_pairs_sents,entity_pairs_rels):
 def create_sentences_indexes(entity_pairs_index, max_sent_idx, max_rel_idx, max_pos_sample_size, neg_sample_size_sent, neg_sample_size_rel, spl_sent_idx, spl_rel_idx):
     disp_step = 0
     loop_flag = True
-    
+    print('Starting creating indices tuples') 
     flag_2_block_count = 0
 
     def repeat_each(a,rep):
@@ -117,11 +118,12 @@ def create_sentences_indexes(entity_pairs_index, max_sent_idx, max_rel_idx, max_
 
     for ent_pair, values in entity_pairs_index.items():
         disp_step += 1
-        if(disp_step%50)==0:
+        if(disp_step%5)==0:
             print('On iterable',disp_step)
-            if(disp_step%1000)==0:
+            print(ret_sent_1_idx.shape, ret_sent_2_idx.shape, ret_sent_3_idx.shape, ret_rel_3_idx.shape, flag_2_block_count)
+            if(disp_step%50)==0:
                 with open(org_data_path+'intermediate/train_indexes.pickle','wb') as f:
-                    results = [ret_sent_1_idx, ret_sent_2_idx, ret_sent_3_idx, ret_rel_2_idx, ret_rel_3_idx]
+                    results = [ret_sent_1_idx, ret_sent_2_idx, ret_sent_3_idx,  ret_rel_3_idx]
                     pickle.dump(results,f,protocol=2)
                 gc.collect()
 
@@ -167,21 +169,19 @@ def create_sentences_indexes(entity_pairs_index, max_sent_idx, max_rel_idx, max_
             ret_sent_1_idx = sent_1_idx
             ret_sent_2_idx = sent_2_idx
             ret_sent_3_idx = sent_3_idx
-            ret_rel_2_idx = rel_2_idx
             ret_rel_3_idx = rel_3_idx
         else:
             ret_sent_1_idx = np.concatenate([ret_sent_1_idx,sent_1_idx])
             ret_sent_2_idx = np.concatenate([ret_sent_2_idx,sent_2_idx])
             ret_sent_3_idx = np.concatenate([ret_sent_3_idx,sent_3_idx])
-            ret_rel_2_idx = np.concatenate([ret_rel_2_idx,rel_2_idx])
             ret_rel_3_idx = np.concatenate([ret_rel_3_idx,rel_3_idx])
 
-    return ret_sent_1_idx, ret_sent_2_idx, ret_sent_3_idx, ret_rel_2_idx, ret_rel_3_idx, flag_2_block_count
+    return ret_sent_1_idx, ret_sent_2_idx, ret_sent_3_idx, ret_rel_3_idx, flag_2_block_count
 
 def create_tuples(entity_pairs_index, sents_embeddings, seq_lens, relations, max_pos_sample_size, neg_sample_size_sent, neg_sample_size_rel):
-    sent_1_idx, sent_2_idx, sent_3_idx, rel_2_idx, rel_3_idx, flag_2_block_count\
+    sent_1_idx, sent_2_idx, sent_3_idx, rel_3_idx, flag_2_block_count\
     = create_sentences_indexes(entity_pairs_index, len(sents_embeddings), len(relations),\
-        max_pos_sample_size, neg_sample_size_sent, neg_sample_size_rel, len(sents_embeddings)+1, spl_sent_idx, len(relations)+1)
+        max_pos_sample_size, neg_sample_size_sent, neg_sample_size_rel, len(sents_embeddings)+1, len(relations)+1)
 
     with open(org_data_path+'intermediate/train_indexes.pickle','wb') as f:
         results = [ret_sent_1_idx, ret_sent_2_idx, ret_sent_3_idx, ret_rel_2_idx, ret_rel_3_idx]
