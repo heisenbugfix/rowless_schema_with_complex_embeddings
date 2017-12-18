@@ -168,7 +168,7 @@ class RowlessModel(object):
                            tf.reduce_sum(tf.multiply(self.out_1, self.out_3), axis=1, keep_dims=True))))
         elif self.emb_type == "complex":
             r1_r2 = tf.reduce_sum(self.out_1_real * self.out_2_real, axis=1) + \
-                        tf.reduce_sum(self.out_1_im * self.out_1_im, axis=1)
+                        tf.reduce_sum(self.out_1_im * self.out_2_im, axis=1)
             r1_r3 = tf.reduce_sum(self.out_1_real * self.out_3_real, axis=1) + \
                         tf.reduce_sum(self.out_1_im * self.out_3_im, axis=1)
             self.loss = tf.reduce_mean(-tf.log(tf.sigmoid(r1_r2 - r1_r3)))
@@ -188,3 +188,4 @@ class RowlessModel(object):
 #                      num_relations=num_relations,
 #                      embedding_size=num_units,
 #                      emb_type='complex')
+# print("OK")
