@@ -67,7 +67,7 @@ ent_pair_idx_rel = create_entity_pairs_index_relations(relations[:[0,1]])
 tuples = create_test_tuples(ent_pair_idx_sent, ent_pair_idx_rel, emb, seq_lens, relations[:,2], test_neg_rel_size)
 try:
 	with open(data_path+'temp/preprocessed_test.pickle','wb') as f:
-		pickle.dump(results,f,protocol=2)
+		pickle.dump(tuples,f,protocol=2)
 except:
 	with open(data_path+'temp/preprocessed_test.json','w') as f:
 		print('JSONing results')
