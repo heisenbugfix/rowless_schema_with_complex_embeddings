@@ -37,7 +37,7 @@ def preprocess_file(f, embeddings_model, max_sent_size):
 	                + [embeddings_model[i] for i in sent[e1_e:e2_s]]\
 	                   + [get_e2_embedding_id()]\
 	                + [embeddings_model[i] for i in sent[e2_e:]]
-	        elif e2_2 <= e1_s:
+	        elif e2_e <= e1_s:
 	            to_ret = [embeddings_model[i] for i in sent[:e2_s]]\
 	                            + [get_e2_embedding_id()]\
 	                + [embeddings_model[i] for i in sent[e2_e:e1_s]]\
@@ -49,11 +49,11 @@ def preprocess_file(f, embeddings_model, max_sent_size):
         	cnt += 1
         	# if 'gypsy' in e:
         		# raise ValueError
-        	print(e)
+        	print(sent)
         	return []
         except KeyError as e:
         	cnt += 1
-        	print(e)
+        	print(sent)
         	return []
         return to_ret + [0 for i in range(max_sent_size-len(to_ret))]
     
@@ -120,6 +120,7 @@ def create_entity_pairs_index_relations(entity_pairs_rels):
     Key : <e1,e2>
     Values : np.ndarray([r1, r2, ...])
     """
+    d = dict()
     for idx,ep in enumerate(entity_pairs_rels):
         key = (ep[0],ep[1])
         if key in d:
@@ -131,6 +132,8 @@ def create_entity_pairs_index_relations(entity_pairs_rels):
 def create_test_tuples(ent_pair_idx_sent, ent_pair_idx_rel, sents_embeddings, seq_lens, relations, test_neg_rel_size):
 	tuples = []
 	disp_step = -1
+
+	all_idxs_rels = np.arange(max_sent_idx)
 
 	for ep in ent_pair_idx_sent.keys():
 		disp_step += 1
